@@ -7,6 +7,7 @@ import com.fancier.picture.backend.model.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fancier.picture.backend.model.User;
 import com.fancier.picture.backend.model.picture.dto.PictureQueryRequest;
+import com.fancier.picture.backend.model.picture.dto.PictureReviewRequest;
 import com.fancier.picture.backend.model.picture.dto.PictureUploadRequest;
 import com.fancier.picture.backend.model.picture.dto.UploadPictureResult;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
@@ -40,4 +41,14 @@ public interface PictureService extends IService<Picture> {
     Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request);
 
     void validPicture(Picture picture);
+
+    /**
+     * 图片审核
+     *
+     * @param pictureReviewRequest
+     * @param loginUser
+     */
+    void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
+
+    void fillReviewParams(Picture picture, User loginUser);
 }
