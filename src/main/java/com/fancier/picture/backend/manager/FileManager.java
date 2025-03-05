@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+@Deprecated
 @Service
 @Slf4j
 public class FileManager {  
