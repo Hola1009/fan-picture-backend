@@ -2,17 +2,14 @@ package com.fancier.picture.backend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.fancier.picture.backend.exception.ErrorCode;
-import com.fancier.picture.backend.model.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.fancier.picture.backend.model.Picture;
 import com.fancier.picture.backend.model.User;
 import com.fancier.picture.backend.model.picture.dto.PictureQueryRequest;
 import com.fancier.picture.backend.model.picture.dto.PictureReviewRequest;
+import com.fancier.picture.backend.model.picture.dto.PictureUploadByBatchRequest;
 import com.fancier.picture.backend.model.picture.dto.PictureUploadRequest;
-import com.fancier.picture.backend.model.picture.dto.UploadPictureResult;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
-import com.fancier.picture.backend.util.ThrowUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -25,12 +22,12 @@ public interface PictureService extends IService<Picture> {
     /**
      * 上传图片
      *
-     * @param multipartFile
+     * @param inputSource
      * @param pictureUploadRequest
      * @param loginUser
      * @return
      */
-    PictureVO uploadPicture(MultipartFile multipartFile,
+    PictureVO uploadPicture(Object inputSource,
                             PictureUploadRequest pictureUploadRequest,
                             User loginUser);
 
@@ -51,4 +48,17 @@ public interface PictureService extends IService<Picture> {
     void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
 
     void fillReviewParams(Picture picture, User loginUser);
+
+    /**
+     * 批量抓取和创建图片
+     *
+     * @param pictureUploadByBatchRequest
+     * @param loginUser
+     * @return 成功创建的图片数
+     */
+    Integer uploadPictureByBatch(
+            PictureUploadByBatchRequest pictureUploadByBatchRequest,
+            User loginUser
+    );
+
 }
