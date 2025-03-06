@@ -15,6 +15,12 @@ spring:
     url: jdbc:mysql://localhost:3306/yu_picture
     username: root
     password: 123456
+  redis:
+    database: 0
+    host: localhost
+    port: 6379
+    password: fancier123
+    timeout: 5000
 mybatis-plus:
   configuration:
     # 仅在开发环境开启日志

@@ -71,7 +71,7 @@ public class UrlPictureUpload extends PictureUploadTemplate {
     }  
   
     @Override  
-    protected void processFile(Object inputSource, File file) throws Exception {
+    protected void processFile(Object inputSource, File file) {
         String fileUrl = (String) inputSource;  
         // 下载文件到临时目录  
         HttpUtil.downloadFile(fileUrl, file);
