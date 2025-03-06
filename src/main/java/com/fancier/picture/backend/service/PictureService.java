@@ -5,10 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fancier.picture.backend.model.Picture;
 import com.fancier.picture.backend.model.User;
-import com.fancier.picture.backend.model.picture.dto.PictureQueryRequest;
-import com.fancier.picture.backend.model.picture.dto.PictureReviewRequest;
-import com.fancier.picture.backend.model.picture.dto.PictureUploadByBatchRequest;
-import com.fancier.picture.backend.model.picture.dto.PictureUploadRequest;
+import com.fancier.picture.backend.model.picture.dto.*;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
 
 import javax.servlet.http.HttpServletRequest;
@@ -62,5 +59,11 @@ public interface PictureService extends IService<Picture> {
     );
 
     void clearPictureFile(Picture oldPicture);
+
+    void checkPictureAuth(User loginUser, Picture picture);
+
+    void deletePicture(long pictureId, User loginUser);
+
+    void editPicture(PictureEditRequest pictureEditRequest, User loginUser);
 
 }
