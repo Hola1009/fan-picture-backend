@@ -32,7 +32,7 @@ public interface UserMapper extends BaseMapper<User> {
                 .eq(StrUtil.isBlank(query.getUserRole()), "user_role", query.getUserRole())
                 .like(StrUtil.isBlank(query.getUserName()), "user_name", query.getUserName())
                 .like(StrUtil.isBlank(query.getUserProfile()), "user_profile", query.getUserProfile())
-                .orderBy(sortOrder != null && sortField != null,
+                .orderBy(StrUtil.isBlank(sortField),
                         !Objects.equals(sortOrder, "descend"), sortField)
         ;
 
