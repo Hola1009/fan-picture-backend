@@ -5,8 +5,11 @@ import cn.dev33.satoken.exception.NotPermissionException;
 import com.fancier.picture.backend.common.BaseResponse;
 import com.fancier.picture.backend.common.ResultUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import javax.xml.ws.Response;
 
 /**
  * 全局异常处理器
@@ -38,5 +41,17 @@ public class GlobalExceptionHandler {
     public BaseResponse<?> businessExceptionHandler(RuntimeException e) {
         log.error("RuntimeException", e);
         return ResultUtils.error(ErrorCode.SYSTEM_ERROR, "系统错误");
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public BaseResponse<?> illegalArgumentExceptionHandler(IllegalArgumentException e) {
+        log.error("IllegalArgumentException", e);
+        return ResultUtils.error(ErrorCode.PARAM_ERROR, e.getMessage());
+    }
+
+    @ExceptionHandler({ MethodArgumentNotValidException.class })
+    public BaseResponse<?> methodArgumentNotValidExceptionException(MethodArgumentNotValidException e) {
+        log.error("methodArgumentNotValidException", e);
+        return ResultUtils.error(ErrorCode.PARAM_ERROR, e.getBindingResult().getAllErrors().get(0).getDefaultMessage());
     }
 }

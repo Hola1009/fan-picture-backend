@@ -2,6 +2,7 @@ package com.fancier.picture.backend.common;
 
 import lombok.Data;
 
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
 /**
@@ -14,6 +15,7 @@ public class DeleteRequest implements Serializable {
     /**
      * id
      */
+    @NotNull
     private Long id;
 
     private static final long serialVersionUID = 1L;
