@@ -2,14 +2,13 @@ package com.fancier.picture.backend.common.exception;
 
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
+import cn.dev33.satoken.exception.NotRoleException;
 import com.fancier.picture.backend.common.BaseResponse;
 import com.fancier.picture.backend.common.ResultUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import javax.xml.ws.Response;
 
 /**
  * 全局异常处理器
@@ -53,5 +52,11 @@ public class GlobalExceptionHandler {
     public BaseResponse<?> methodArgumentNotValidExceptionException(MethodArgumentNotValidException e) {
         log.error("methodArgumentNotValidException", e);
         return ResultUtils.error(ErrorCode.PARAM_ERROR, e.getBindingResult().getAllErrors().get(0).getDefaultMessage());
+    }
+
+    @ExceptionHandler(NotRoleException.class)
+    public BaseResponse<?> notRoleExceptionHandler(NotRoleException e) {
+        log.error("NotRoleException", e);
+        return ResultUtils.error(ErrorCode.NO_AUTH_ERROR, e.getMessage());
     }
 }

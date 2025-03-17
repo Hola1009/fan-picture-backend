@@ -59,7 +59,7 @@ public class UserController {
 
 
     @PostMapping("/add")
-    @SaCheckRole()
+    @SaCheckRole(UserRole.ADMIN_ROLE)
     public BaseResponse<Long> addUser(@Validated @RequestBody AddUserRequest request) {
         return ResultUtils.success(userService.addUser(request));
     }
@@ -81,7 +81,7 @@ public class UserController {
         return ResultUtils.success(userVO);
     }
 
-    @GetMapping("/delete")
+    @PostMapping("/delete")
     @SaCheckRole(UserRole.ADMIN_ROLE)
     public BaseResponse<Boolean> deleteUser(@Validated @RequestBody DeleteRequest request) {
         return ResultUtils.success(userService.removeById(request.getId()));
@@ -94,6 +94,7 @@ public class UserController {
     }
 
     @PostMapping("/list/page/vo")
+    @SaCheckRole(UserRole.ADMIN_ROLE)
     public BaseResponse<Page<UserVO>> getUsers(@Validated @RequestBody UserPageQuery pageQuery) {
         return ResultUtils.success(userService.getUsers(pageQuery));
     }

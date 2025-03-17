@@ -28,11 +28,11 @@ public interface UserMapper extends BaseMapper<User> {
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
 
         queryWrapper.eq(Objects.nonNull(query.getId()), "id", query.getId())
-                .eq(StrUtil.isBlank(query.getUserAccount()), "user_account", query.getUserAccount())
-                .eq(StrUtil.isBlank(query.getUserRole()), "user_role", query.getUserRole())
-                .like(StrUtil.isBlank(query.getUserName()), "user_name", query.getUserName())
-                .like(StrUtil.isBlank(query.getUserProfile()), "user_profile", query.getUserProfile())
-                .orderBy(StrUtil.isBlank(sortField),
+                .eq(StrUtil.isNotBlank(query.getUserAccount()), "user_account", query.getUserAccount())
+                .eq(StrUtil.isNotBlank(query.getUserRole()), "user_role", query.getUserRole())
+                .like(StrUtil.isNotBlank(query.getUserName()), "user_name", query.getUserName())
+                .like(StrUtil.isNotBlank(query.getUserProfile()), "user_profile", query.getUserProfile())
+                .orderBy(StrUtil.isNotBlank(sortField),
                         !Objects.equals(sortOrder, "descend"), sortField)
         ;
 

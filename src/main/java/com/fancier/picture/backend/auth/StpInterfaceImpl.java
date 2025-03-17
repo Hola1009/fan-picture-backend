@@ -3,6 +3,7 @@ package com.fancier.picture.backend.auth;
 
 
 import cn.dev33.satoken.stp.StpInterface;
+import cn.dev33.satoken.stp.StpUtil;
 import com.fancier.picture.backend.model.user.vo.LoginUserVO;
 import org.springframework.stereotype.Component;
 
@@ -31,7 +32,7 @@ public class StpInterfaceImpl implements StpInterface {
     @Override
     public List<String> getRoleList(Object loginId, String loginType) {
         // 本 list 仅做模拟，实际项目中要根据具体业务逻辑来查询角色
-        LoginUserVO loginUserVO = (LoginUserVO) loginId;
+        LoginUserVO loginUserVO = (LoginUserVO) StpUtil.getSession().getLoginId();
         String userRole = loginUserVO.getUserRole();
         return Collections.singletonList(userRole);
     }
