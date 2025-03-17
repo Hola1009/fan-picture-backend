@@ -1,0 +1,9 @@
+author: fancier<https://github.com/hola1009>
+${AnsiColor.MAGENTA}
+________                   _____
+___  __/_____ ________________(_)____________
+__  /_ _  __ `/_  __ \  ___/_  /_  _ \_  ___/
+_  __/ / /_/ /_  / / / /__ _  / /  __/  /
+/_/    \__,_/ /_/ /_/\___/ /_/  \___//_/
+${AnsiColor.GREEN}:: Spring Boot :: ${spring-boot.version}        ${spring-boot.formatted-version}
+${AnsiColor.BRIGHT_WHITE}
