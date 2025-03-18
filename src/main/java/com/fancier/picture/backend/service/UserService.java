@@ -26,4 +26,6 @@ public interface UserService extends IService<User> {
     Boolean updateUser(UpdateUserRequest request);
 
     Page<UserVO> getUsers(UserPageQuery pageQuery);
+
+    LoginUserVO getLoginUser();
 }

@@ -1,0 +1,27 @@
+[
+  {
+    "key": "spaceUser:manage",
+    "name": "成员管理",
+    "description": "管理空间成员，添加或移除成员"
+  },
+  {
+    "key": "picture:view",
+    "name": "查看图片",
+    "description": "查看空间中的图片内容"
+  },
+  {
+    "key": "picture:upload",
+    "name": "上传图片",
+    "description": "上传图片到空间中"
+  },
+  {
+    "key": "picture:edit",
+    "name": "修改图片",
+    "description": "编辑已上传的图片信息"
+  },
+  {
+    "key": "picture:delete",
+    "name": "删除图片",
+    "description": "删除空间中的图片"
+  }
+]

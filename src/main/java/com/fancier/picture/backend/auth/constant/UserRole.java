@@ -1,4 +1,4 @@
-package com.fancier.picture.backend.constant;
+package com.fancier.picture.backend.auth.constant;
 
 /**
  * @author <a href="https://github.com/hola1009">fancier</a>

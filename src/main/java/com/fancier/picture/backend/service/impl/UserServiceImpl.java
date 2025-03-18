@@ -1,17 +1,17 @@
 package com.fancier.picture.backend.service.impl;
 
-import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fancier.picture.backend.auth.constant.StpKit;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
+import com.fancier.picture.backend.mapper.UserMapper;
 import com.fancier.picture.backend.model.user.User;
 import com.fancier.picture.backend.model.user.dto.*;
 import com.fancier.picture.backend.model.user.vo.LoginUserVO;
 import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.service.UserService;
-import com.fancier.picture.backend.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -74,7 +74,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         LoginUserVO loginUserVO = new LoginUserVO();
         BeanUtils.copyProperties(one, loginUserVO);
 
-        StpUtil.login(loginUserVO);
+        StpKit.USER.login(loginUserVO);
 
         return loginUserVO;
     }
@@ -124,6 +124,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         userVOPage.setRecords(userVOS);
 
         return userVOPage;
+    }
+
+    @Override
+    public LoginUserVO getLoginUser() {
+        return (LoginUserVO) StpKit.USER.getSession().getLoginId();
     }
 
 

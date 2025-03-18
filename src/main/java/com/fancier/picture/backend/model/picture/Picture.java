@@ -1,12 +1,12 @@
 package com.fancier.picture.backend.model.picture;
 
-import java.io.Serializable;
-import java.time.LocalDateTime;
-
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * 图片
@@ -28,7 +28,7 @@ public class Picture implements Serializable {
     /**
      * 图片名称
      */
-    private String name;
+    private String picName;
 
     /**
      * 简介

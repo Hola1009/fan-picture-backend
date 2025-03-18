@@ -1,8 +1,10 @@
 package com.fancier.picture.backend.model.user.dto;
 
+import com.fancier.picture.backend.auth.constant.UserRole;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 /**
@@ -12,6 +14,7 @@ import javax.validation.constraints.Pattern;
 public class AddUserRequest {
 
     @Length(min = 4, max = 11, message = "用户账号长度在4-11")
+    @NotNull
     private String userAccount;
 
     @Length(min = 1, max = 11, message = "用户账号长度在1-11")
@@ -25,5 +28,5 @@ public class AddUserRequest {
     private String userAvatar;
 
     @Pattern(regexp = "admin|user|vip", message = "角色值必须是 user、vip 或 admin 之一")
-    private String userRole;
+    private String userRole = UserRole.USER_ROLE;
 }
