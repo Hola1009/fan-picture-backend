@@ -1,4 +1,4 @@
-package com.fancier.picture.backend.helper.tencentCOS;
+package com.fancier.picture.backend.thirdparty.tencentCOS;
 
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;

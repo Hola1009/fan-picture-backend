@@ -1,4 +1,4 @@
-package com.fancier.picture.backend.helper.tencentCOS.model;
+package com.fancier.picture.backend.thirdparty.tencentCOS.model;
 
 import lombok.Data;
 

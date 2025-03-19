@@ -1,10 +1,9 @@
 package com.fancier.picture.backend.service;
 
-import com.fancier.picture.backend.model.picture.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.fancier.picture.backend.model.picture.Picture;
 import com.fancier.picture.backend.model.picture.dto.UploadPictureRequest;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
 * @author Fanfan
@@ -15,5 +14,5 @@ public interface PictureService extends IService<Picture> {
 
 
 
-    PictureVO uploadPicture(MultipartFile multipartFile, UploadPictureRequest request);
+    PictureVO uploadPicture(Object inputSource, UploadPictureRequest request);
 }

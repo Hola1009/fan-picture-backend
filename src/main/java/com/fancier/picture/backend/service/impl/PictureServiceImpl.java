@@ -3,8 +3,6 @@ package com.fancier.picture.backend.service.impl;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
-import com.fancier.picture.backend.helper.tencentCOS.UploadPictureHelper;
-import com.fancier.picture.backend.helper.tencentCOS.model.UploadPictureResult;
 import com.fancier.picture.backend.mapper.PictureMapper;
 import com.fancier.picture.backend.model.picture.Picture;
 import com.fancier.picture.backend.model.picture.dto.UploadPictureRequest;
@@ -12,10 +10,12 @@ import com.fancier.picture.backend.model.picture.vo.PictureVO;
 import com.fancier.picture.backend.model.space.Space;
 import com.fancier.picture.backend.service.PictureService;
 import com.fancier.picture.backend.service.SpaceService;
+import com.fancier.picture.backend.thirdparty.tencentCOS.UploadPictureByFileService;
+import com.fancier.picture.backend.thirdparty.tencentCOS.UploadPictureByUrlService;
+import com.fancier.picture.backend.thirdparty.tencentCOS.model.UploadPictureResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 /**
 * @author Fanfan
@@ -27,7 +27,9 @@ import org.springframework.web.multipart.MultipartFile;
 public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     implements PictureService{
 
-    private final UploadPictureHelper uploadPictureHelper;
+    private final UploadPictureByFileService uploadPictureByFileService;
+
+    private final UploadPictureByUrlService uploadPictureByUrlService;
 
     private final UserServiceImpl userService;
 
@@ -42,7 +44,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
      * 然后再判断是公共服务还是
      */
     @Override
-    public PictureVO uploadPicture(MultipartFile multipartFile, UploadPictureRequest request) {
+    public PictureVO uploadPicture(Object inputSource, UploadPictureRequest request) {
         Long spaceId = request.getSpaceId();
         Long pictureId = request.getId();
         Long userId = userService.getLoginUser().getId();
@@ -63,8 +65,14 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
 
         // 上传图片, 区分公共图库和其他图库
-        String uploadPathPrefix = spaceId == null ? "public/" : "space/" + spaceId + "/";
-        UploadPictureResult uploadPictureResult = uploadPictureHelper.uploadFile(multipartFile, uploadPathPrefix);
+        String uploadPathPrefix = spaceId == null ? "public" : "space/" + spaceId;
+        UploadPictureResult uploadPictureResult;
+        if (inputSource instanceof String) {
+            uploadPictureResult = uploadPictureByUrlService.uploadFile(inputSource, uploadPathPrefix);
+        } else {
+            uploadPictureResult = uploadPictureByFileService.uploadFile(inputSource, uploadPathPrefix);
+        }
+
         Picture picture = new Picture();
         BeanUtils.copyProperties(uploadPictureResult, picture);
 
@@ -80,6 +88,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         return pictureVO;
     }
+
+
 }
 
 

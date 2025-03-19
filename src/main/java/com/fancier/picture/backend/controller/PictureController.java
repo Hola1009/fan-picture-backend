@@ -8,10 +8,7 @@ import com.fancier.picture.backend.model.picture.dto.UploadPictureRequest;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
 import com.fancier.picture.backend.service.PictureService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestPart;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -31,5 +28,14 @@ public class PictureController {
                             UploadPictureRequest request) {
         return pictureService.uploadPicture(multipartFile, request);
     }
+
+    @PostMapping("/upload/url")
+    @SaCheckLogin(type = KitType.USER)
+    @SaCheckPermission(type = KitType.SPACE, value = SpacePermission.PICTURE_VIEW)
+    public PictureVO uploadByUrl(@RequestBody UploadPictureRequest request) {
+        String fileUrl = request.getFileUrl();
+        return pictureService.uploadPicture(fileUrl, request);
+    }
+
 
 }

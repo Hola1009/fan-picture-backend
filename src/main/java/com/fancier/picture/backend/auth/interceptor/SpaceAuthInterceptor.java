@@ -27,8 +27,7 @@ public class SpaceAuthInterceptor implements HandlerInterceptor {
 
         //
         if (ContentType.JSON.getValue().equals(contentType)) {
-            String body = ServletUtil.getBody(request);
-            spaceAuthContext = JSONUtil.toBean(body, SpaceAuthContext.class);
+            String body = ServletUtil.getBody(request);spaceAuthContext = JSONUtil.toBean(body, SpaceAuthContext.class);
 
             SpaceAuthHolder.set(spaceAuthContext);
         } else {
