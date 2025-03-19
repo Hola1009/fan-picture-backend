@@ -9,8 +9,18 @@ import cn.dev33.satoken.stp.StpUtil;
 public interface StpKit {
     StpLogic DEFAULT = StpUtil.stpLogic;
 
-    StpLogic USER = new StpLogic("user");
+    StpLogic USER = new StpLogic(KitType.USER) {
+        @Override
+        public String splicingKeyTokenName() {
+            return super.splicingKeyTokenName() + "-" + KitType.USER;
+        }
+    };
 
-    StpLogic SPACE = new StpLogic("space");
+    StpLogic SPACE = new StpLogic(KitType.SPACE) {
+        @Override
+        public String splicingKeyTokenName() {
+            return super.splicingKeyTokenName() + "-" + KitType.SPACE;
+        }
+    };
 
 }

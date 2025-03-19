@@ -32,8 +32,8 @@ public class StpInterfaceImpl implements StpInterface {
     private static final Map<String , List<String>> spaceRolePermissionsMap;
 
     static {
-        List<SpaceRole> spaceRoles = AuthJsonFileParser.parse2ListFormResource(SpaceRole.class, "/biz/spaceUserRoles.json");
-        spaceRolePermissionsMap = spaceRoles.stream().collect(Collectors.toMap(SpaceRole::getName, SpaceRole::getPermissions));
+        List<SpaceRole> spaceRoles = AuthJsonFileParser.parse2ListFormResource(SpaceRole.class, "biz/spaceUserRoles.json");
+        spaceRolePermissionsMap = spaceRoles.stream().collect(Collectors.toMap(SpaceRole::getKey, SpaceRole::getPermissions));
     }
 
     @Resource
@@ -80,12 +80,10 @@ public class StpInterfaceImpl implements StpInterface {
     private List<String> getSpacePermissionList() {
         SpaceAuthContext spaceAuthContext = SpaceAuthHolder.get();
         String servletPath = spaceAuthContext.getServletPath();
-        switch (servletPath) {
-            case "picture":
-                return handlePicturePath(spaceAuthContext);
-            case "space": // todo
-            case "spaceUser": // todo
+        if (servletPath.startsWith("/picture")) {
+            return handlePicturePath(spaceAuthContext);
         }
+
         return Collections.emptyList();
     }
 
@@ -98,7 +96,9 @@ public class StpInterfaceImpl implements StpInterface {
      * 5. 编辑图片
      */
     List<String> handlePicturePath(SpaceAuthContext spaceAuthContext) {
-        LoginUserVO loginUser = userService.getLoginUser();
+        // 没获取到就返回一个字段全为空的对象防止空指针异常
+        LoginUserVO loginUser = (LoginUserVO) StpKit.SPACE.getSession().getLoginId();
+
         Long userId = loginUser.getId();
         Long pictureId = spaceAuthContext.getId();
         Long spaceId = spaceAuthContext.getSpaceId();
@@ -113,7 +113,7 @@ public class StpInterfaceImpl implements StpInterface {
             return spaceRolePermissionsMap.get(SpaceUserRole.EDITOR);
         }
 
-        Picture picture = null;
+        Picture picture;
         Long ownerId = null;
         // 这一步主要是为了获取 spaceId
         if (pictureId != null) {
@@ -135,7 +135,7 @@ public class StpInterfaceImpl implements StpInterface {
 
         // 走到这里 space 为 null pictureId 不为 null, 表示是操作公共图库的图片
         // 如果是共有图库的图片用户者则享受编辑权限
-        if (userId.equals(ownerId)) {
+        if (userId != null && userId.equals(ownerId)) {
             return spaceRolePermissionsMap.get(SpaceUserRole.EDITOR);
         }
 

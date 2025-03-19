@@ -3,6 +3,7 @@ package com.fancier.picture.backend.common.exception;
 import cn.dev33.satoken.exception.NotLoginException;
 import cn.dev33.satoken.exception.NotPermissionException;
 import cn.dev33.satoken.exception.NotRoleException;
+import cn.dev33.satoken.exception.SaTokenException;
 import com.fancier.picture.backend.common.BaseResponse;
 import com.fancier.picture.backend.common.ResultUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -56,6 +57,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotRoleException.class)
     public BaseResponse<?> notRoleExceptionHandler(NotRoleException e) {
+        log.error("NotRoleException", e);
+        return ResultUtils.error(ErrorCode.NO_AUTH_ERROR, e.getMessage());
+    }
+
+    @ExceptionHandler(SaTokenException.class)
+    public BaseResponse<?> saTokenExceptionHandler(SaTokenException e) {
         log.error("NotRoleException", e);
         return ResultUtils.error(ErrorCode.NO_AUTH_ERROR, e.getMessage());
     }

@@ -6,7 +6,7 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.StrUtil;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
-import com.fancier.picture.backend.model.picture.vo.UploadPictureResult;
+import com.fancier.picture.backend.helper.tencentCOS.model.UploadPictureResult;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
@@ -65,7 +65,9 @@ public class UploadPictureHelper {
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
-            tempFile.delete();
+            if (tempFile != null) {
+                tempFile.delete();
+            }
         }
     }
 

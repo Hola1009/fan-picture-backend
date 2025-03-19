@@ -24,6 +24,7 @@ public class HttpRequestWrapperFilter implements Filter {
 
             if (ContentType.JSON.getValue().equals(contentType)) {
                 chain.doFilter(new HttpRequestWrapper(httpServletRequest), response);
+                return;
             }
 
             request.getContentType();

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fancier.picture.backend.auth.constant.StpKit;
+import com.fancier.picture.backend.auth.constant.UserRole;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
 import com.fancier.picture.backend.mapper.UserMapper;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -75,7 +77,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         BeanUtils.copyProperties(one, loginUserVO);
 
         StpKit.USER.login(loginUserVO);
-
+        StpKit.SPACE.login(loginUserVO);
         return loginUserVO;
     }
 
@@ -128,9 +130,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public LoginUserVO getLoginUser() {
-        return (LoginUserVO) StpKit.USER.getSession().getLoginId();
+        LoginUserVO loginUserVO = (LoginUserVO) StpKit.USER.getSession().getLoginId();
+        // 防止未登录造成的空指针异常
+        return Optional.of(loginUserVO).orElseGet(LoginUserVO::new);
     }
 
+    @Override
+    public Boolean isAdmin() {
+        LoginUserVO loginUser = getLoginUser();
+        return UserRole.ADMIN_ROLE.equals(loginUser.getUserRole());
+    }
 
     @Override
     public String encode(String password) {

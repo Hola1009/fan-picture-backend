@@ -16,6 +16,8 @@ public interface UserService extends IService<User> {
 
     Long registerUser(RegisterUserRequest request);
 
+    Boolean isAdmin();
+
     String encode(String password);
 
 

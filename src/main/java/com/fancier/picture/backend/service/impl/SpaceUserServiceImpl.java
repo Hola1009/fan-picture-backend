@@ -20,8 +20,8 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
     public String getSpaceRole(Long userId, Long spaceId) {
 
         LambdaQueryChainWrapper<SpaceUser> eq = this.lambdaQuery().select(SpaceUser::getSpaceRole)
-                .eq(userId != null, SpaceUser::getUserId, userId)
-                .eq(spaceId != null, SpaceUser::getSpaceId, spaceId);
+                .eq(SpaceUser::getUserId, userId)
+                .eq(SpaceUser::getSpaceId, spaceId);
 
         SpaceUser one = this.getOne(eq);
 

@@ -1,16 +1,15 @@
 package com.fancier.picture.backend.controller;
 
 import cn.dev33.satoken.annotation.SaCheckRole;
-import cn.dev33.satoken.stp.StpUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.fancier.picture.backend.auth.constant.KitType;
 import com.fancier.picture.backend.auth.constant.StpKit;
+import com.fancier.picture.backend.auth.constant.UserRole;
 import com.fancier.picture.backend.common.BaseResponse;
 import com.fancier.picture.backend.common.DeleteRequest;
 import com.fancier.picture.backend.common.ResultUtils;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
-import com.fancier.picture.backend.auth.constant.KitType;
-import com.fancier.picture.backend.auth.constant.UserRole;
 import com.fancier.picture.backend.model.user.User;
 import com.fancier.picture.backend.model.user.dto.*;
 import com.fancier.picture.backend.model.user.vo.LoginUserVO;
@@ -49,9 +48,9 @@ public class UserController {
     }
 
     @GetMapping("/get/login")
-    public BaseResponse<?> getLoginUser() {StpUtil.getLoginId();
-        Object loginId = StpKit.USER.getSession().getLoginId();
-        return ResultUtils.success(loginId);
+    public BaseResponse<?> getLoginUser() {
+        LoginUserVO loginUser = userService.getLoginUser();
+        return ResultUtils.success(loginUser);
     }
     @GetMapping("/logout")
     public BaseResponse<?> logout() {
