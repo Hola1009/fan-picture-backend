@@ -1,4 +1,4 @@
-package com.fancier.picture.backend.auth.helper;
+package com.fancier.picture.backend.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -10,10 +10,10 @@ import java.util.stream.Collectors;
 /**
  * @author <a href="https://github.com/hola1009">fancier</a>
  **/
-public class AuthJsonFileParser {
+public class JsonFileParserUtil {
     public static <T> List<T> parse2ListFormResource(Class<T> clazz, String filePath) {
         ObjectMapper objectMapper = new ObjectMapper();
-        try (InputStream inputStream = AuthJsonFileParser.class
+        try (InputStream inputStream = JsonFileParserUtil.class
                 .getClassLoader().getResourceAsStream(filePath)) {
             if (inputStream == null) {
                 throw new RuntimeException("未找到 " + filePath + " 文件");

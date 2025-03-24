@@ -6,15 +6,16 @@ import com.fancier.picture.backend.auth.constant.KitType;
 import com.fancier.picture.backend.auth.constant.SpaceUserRole;
 import com.fancier.picture.backend.auth.constant.StpKit;
 import com.fancier.picture.backend.auth.constant.UserRole;
-import com.fancier.picture.backend.auth.helper.AuthJsonFileParser;
 import com.fancier.picture.backend.auth.helper.SpaceAuthHolder;
 import com.fancier.picture.backend.auth.model.SpaceAuthContext;
 import com.fancier.picture.backend.auth.model.SpaceRole;
+import com.fancier.picture.backend.common.exception.ErrorCode;
+import com.fancier.picture.backend.common.exception.ThrowUtils;
 import com.fancier.picture.backend.model.picture.Picture;
 import com.fancier.picture.backend.model.user.vo.LoginUserVO;
 import com.fancier.picture.backend.service.PictureService;
 import com.fancier.picture.backend.service.SpaceUserService;
-import com.fancier.picture.backend.service.UserService;
+import com.fancier.picture.backend.util.JsonFileParserUtil;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -32,12 +33,10 @@ public class StpInterfaceImpl implements StpInterface {
     private static final Map<String , List<String>> spaceRolePermissionsMap;
 
     static {
-        List<SpaceRole> spaceRoles = AuthJsonFileParser.parse2ListFormResource(SpaceRole.class, "biz/spaceUserRoles.json");
+        List<SpaceRole> spaceRoles = JsonFileParserUtil.parse2ListFormResource(SpaceRole.class, "biz/spaceUserRoles.json");
         spaceRolePermissionsMap = spaceRoles.stream().collect(Collectors.toMap(SpaceRole::getKey, SpaceRole::getPermissions));
     }
 
-    @Resource
-    private UserService userService;
 
     @Resource
     private PictureService pictureService;
@@ -120,11 +119,11 @@ public class StpInterfaceImpl implements StpInterface {
             picture = pictureService.lambdaQuery().select(Picture::getSpaceId, Picture::getUserId)
                     .eq(Picture::getId, pictureId).one();
 
-            if (picture != null) {
-                // 防止空间 id 误传
-                spaceId = picture.getSpaceId();
-                ownerId = picture.getUserId();
-            }
+            ThrowUtils.throwIf(picture == null, ErrorCode.PARAM_ERROR, "图片不存在");
+
+            // 防止空间 id 误传
+            spaceId = picture.getSpaceId();
+            ownerId = picture.getUserId();
         }
 
         // 优先从空间里返回权限

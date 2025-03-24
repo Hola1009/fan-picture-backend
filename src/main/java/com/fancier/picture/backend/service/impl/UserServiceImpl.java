@@ -136,6 +136,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
+    public UserVO getUserVO(Long id) {
+        User byId = getById(id);
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(byId, userVO);
+        return userVO;
+    }
+
+    @Override
     public Boolean isAdmin() {
         LoginUserVO loginUser = getLoginUser();
         return UserRole.ADMIN_ROLE.equals(loginUser.getUserRole());
