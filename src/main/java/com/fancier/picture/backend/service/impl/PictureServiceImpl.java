@@ -9,7 +9,9 @@ import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
 import com.fancier.picture.backend.mapper.PictureMapper;
 import com.fancier.picture.backend.model.picture.Picture;
+import com.fancier.picture.backend.model.picture.constant.ReviewType;
 import com.fancier.picture.backend.model.picture.dto.PicturePageQuery;
+import com.fancier.picture.backend.model.picture.dto.ReviewPictureRequest;
 import com.fancier.picture.backend.model.picture.dto.UpdatePictureRequest;
 import com.fancier.picture.backend.model.picture.dto.UploadPictureRequest;
 import com.fancier.picture.backend.model.picture.vo.PictureTagCategory;
@@ -115,7 +117,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         PictureVO pictureVO = new PictureVO();
         BeanUtils.copyProperties(picture, pictureVO);
-
+        autoFillReviewStatus(picture);
         return pictureVO;
     }
 
@@ -129,6 +131,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 参数校验 & 属性拷贝
         Picture picture = new Picture();
         validateAndFillParameter(request, picture);
+        autoFillReviewStatus(picture);
         return updateById(picture);
     }
 
@@ -205,6 +208,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 参数校验 属性拷贝
         Picture picture = new Picture();
         validateAndFillParameter(request, picture);
+        autoFillReviewStatus(picture);
         return updateById(picture);
     }
 
@@ -214,6 +218,18 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         pictureTagCategory.setCategoryList(categoryList);
         pictureTagCategory.setTagList(tagList);
         return pictureTagCategory;
+    }
+
+    @Override
+    public Boolean review(ReviewPictureRequest request) {
+        Picture byId = getById(request.getId());
+        ThrowUtils.throwIf(byId == null, ErrorCode.PARAM_ERROR, "需要修改的图片不存在");
+
+        Picture picture = new Picture();
+        BeanUtils.copyProperties(request, picture);
+        picture.setReviewerId(userService.getLoginUser().getId());
+
+        return updateById(picture);
     }
 
 
@@ -231,6 +247,14 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         picture.setTags(jsonTagStr);
     }
 
+    private void autoFillReviewStatus(Picture picture) {
+        Boolean isAdmin = userService.isAdmin();
+        if (isAdmin) {
+            picture.setReviewStatus(ReviewType.REVIEWING.getValue());
+        } else {
+            picture.setReviewStatus(ReviewType.PASS.getValue());
+        }
+    }
 
 }
 

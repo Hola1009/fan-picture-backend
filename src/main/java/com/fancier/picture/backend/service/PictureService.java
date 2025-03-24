@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fancier.picture.backend.model.picture.Picture;
 import com.fancier.picture.backend.model.picture.dto.PicturePageQuery;
+import com.fancier.picture.backend.model.picture.dto.ReviewPictureRequest;
 import com.fancier.picture.backend.model.picture.dto.UpdatePictureRequest;
 import com.fancier.picture.backend.model.picture.dto.UploadPictureRequest;
 import com.fancier.picture.backend.model.picture.vo.PictureTagCategory;
@@ -35,4 +36,6 @@ public interface PictureService extends IService<Picture> {
     Boolean edit(UpdatePictureRequest request);
 
     PictureTagCategory listPictureTagCategory();
+
+    Boolean review(ReviewPictureRequest request);
 }
