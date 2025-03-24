@@ -1,38 +1,46 @@
 package com.fancier.picture.backend.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.io.FileUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fancier.picture.backend.common.exception.BusinessException;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
 import com.fancier.picture.backend.mapper.PictureMapper;
+import com.fancier.picture.backend.mapper.SpaceMapper;
 import com.fancier.picture.backend.model.picture.Picture;
 import com.fancier.picture.backend.model.picture.constant.ReviewType;
-import com.fancier.picture.backend.model.picture.dto.PicturePageQuery;
-import com.fancier.picture.backend.model.picture.dto.ReviewPictureRequest;
-import com.fancier.picture.backend.model.picture.dto.UpdatePictureRequest;
-import com.fancier.picture.backend.model.picture.dto.UploadPictureRequest;
+import com.fancier.picture.backend.model.picture.dto.*;
 import com.fancier.picture.backend.model.picture.vo.PictureTagCategory;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
 import com.fancier.picture.backend.model.space.Space;
 import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.service.PictureService;
-import com.fancier.picture.backend.service.SpaceService;
 import com.fancier.picture.backend.thirdparty.tencentCOS.UploadPictureByFileService;
 import com.fancier.picture.backend.thirdparty.tencentCOS.UploadPictureByUrlService;
 import com.fancier.picture.backend.thirdparty.tencentCOS.model.UploadPictureResult;
 import com.fancier.picture.backend.util.JsonFileParserUtil;
 import lombok.RequiredArgsConstructor;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -51,7 +59,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     private final UserServiceImpl userService;
 
-    private final SpaceService spaceService;
+    private final SpaceMapper spaceMapper;
 
     private final PictureMapper pictureMapper;
 
@@ -91,8 +99,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             // 这一步是预见了管理员操作其他用户图片
             userId = oldPicture.getUserId();
         } else if (spaceId != null) { // 上传图片到指定空间, 需要保证空间存在
-            Space space = spaceService.lambdaQuery().select(Space::getId)
-                    .eq(Space::getId, spaceId).one();
+            LambdaQueryWrapper<Space> wrapper = new LambdaQueryWrapper<Space>().select(Space::getId)
+                    .eq(Space::getId, spaceId);
+            Space space = spaceMapper.selectOne(wrapper);
             ThrowUtils.throwIf(space == null, ErrorCode.PARAM_ERROR, "空间不存在");
         }
 
@@ -130,8 +139,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     public Boolean updatePicture(UpdatePictureRequest request) {
         // 参数校验 & 属性拷贝
         Picture picture = new Picture();
-        validateAndFillParameter(request, picture);
-        autoFillReviewStatus(picture);
+        BeanUtils.copyProperties(request, picture);
+        validateAndFillParameter(request.getTags(), request.getCategory(), picture);
+
         return updateById(picture);
     }
 
@@ -207,8 +217,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         // 参数校验 属性拷贝
         Picture picture = new Picture();
-        validateAndFillParameter(request, picture);
-        autoFillReviewStatus(picture);
+        BeanUtils.copyProperties(request, picture);
+        validateAndFillParameter(request.getTags(), request.getCategory(), picture);
         return updateById(picture);
     }
 
@@ -232,19 +242,83 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         return updateById(picture);
     }
 
+    @Override
+    public Integer batchUpload(BatchUploadPictureRequest request) throws IOException {
+        // 获取页面的图片标签
+        String fetchUrl = String.format("https://cn.bing.com/images/async?q=%s&mmasync=1", request.getSearchText());
+        Document document = Jsoup.connect(fetchUrl).get();
+        Element div = document.getElementsByClass("dg_b isvctrl").first();
+        if (ObjUtil.isEmpty(div)) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "获取元素失败");
+        }
+        Elements imgElements = Objects.requireNonNull(div).select("img.ming");
 
-    private void validateAndFillParameter(UpdatePictureRequest request, Picture picture) {
-        List<String> tags = request.getTags();
-        String category = request.getCategory();
+        if (StrUtil.isBlank(request.getNamePrefix())) {
+            request.setNamePrefix(request.getSearchText());
+        }
 
+        Integer count = 0;
+        for (Element imgElement : imgElements) {
+            String originalUrl = imgElement.attr("src");
+            if (StrUtil.isBlank(originalUrl)) {
+                continue;
+            }
+            String url = originalUrl;
+
+            int i = originalUrl.indexOf("?");
+            if (i > -1) {
+                url = originalUrl.substring(0, i);
+            }
+
+            UploadPictureRequest uploadPictureRequest = new UploadPictureRequest();
+            uploadPictureRequest.setFileUrl(url);
+
+            String mainName = FileUtil.mainName(url);
+            uploadPictureRequest.setPicName(mainName + "-" + count);
+
+            uploadPicture(url, uploadPictureRequest);
+
+            if ((++count).equals(request.getCount())) {
+                break;
+            }
+        }
+
+        return count;
+    }
+
+    @Override
+    @Transactional
+    public Boolean batchEdit(BatchEditPictureRequest request) {
+        List<Long> pictureIdList = request.getPictureIdList();
+        List<Picture> oldPictures = this.listByIds(pictureIdList);
+
+        Long spaceId = request.getSpaceId();
+
+        Space space = spaceMapper.selectById(spaceId);
+
+        ThrowUtils.throwIf(space == null, ErrorCode.PARAM_ERROR, "空间 id 不存在");
+
+        List<Picture> pictures = oldPictures.stream().map(p -> {
+            Picture picture = new Picture();
+            validateAndFillParameter(request.getTags(), request.getCategory(), picture);
+            return picture;
+        }).collect(Collectors.toList());
+
+        fillPictureWithNameRule(pictures, request.getNameRule());
+
+        return this.updateBatchById(pictures);
+    }
+
+
+    private void validateAndFillParameter(List<String> tags, String category, Picture picture) {
         ThrowUtils.throwIf(CollUtil.isNotEmpty(tags) && !new HashSet<>(tagList).containsAll(tags),
                 ErrorCode.PARAM_ERROR, "部分标签非法");
         ThrowUtils.throwIf(category != null && !categoryList.contains(category),
                 ErrorCode.PARAM_ERROR, "分类非法");
 
-        BeanUtils.copyProperties(request, picture);
         String jsonTagStr = JSONUtil.toJsonStr(tags);
         picture.setTags(jsonTagStr);
+        autoFillReviewStatus(picture);
     }
 
     private void autoFillReviewStatus(Picture picture) {
@@ -253,6 +327,22 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             picture.setReviewStatus(ReviewType.REVIEWING.getValue());
         } else {
             picture.setReviewStatus(ReviewType.PASS.getValue());
+        }
+    }
+
+    private void fillPictureWithNameRule(List<Picture> pictureList, String nameRule) {
+        if (StrUtil.isBlank(nameRule) || CollUtil.isEmpty(pictureList)) {
+            return;
+        }
+        long count = 1;
+        try {
+            for (Picture picture : pictureList) {
+                String pictureName = nameRule.replaceAll("\\{序号}", String.valueOf(count++));
+                picture.setPicName(pictureName);
+            }
+        } catch (Exception e) {
+            log.error("名称解析错误", e);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "名称解析错误");
         }
     }
 

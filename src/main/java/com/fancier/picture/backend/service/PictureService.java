@@ -3,12 +3,11 @@ package com.fancier.picture.backend.service;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fancier.picture.backend.model.picture.Picture;
-import com.fancier.picture.backend.model.picture.dto.PicturePageQuery;
-import com.fancier.picture.backend.model.picture.dto.ReviewPictureRequest;
-import com.fancier.picture.backend.model.picture.dto.UpdatePictureRequest;
-import com.fancier.picture.backend.model.picture.dto.UploadPictureRequest;
+import com.fancier.picture.backend.model.picture.dto.*;
 import com.fancier.picture.backend.model.picture.vo.PictureTagCategory;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
+
+import java.io.IOException;
 
 /**
 * @author Fanfan
@@ -38,4 +37,8 @@ public interface PictureService extends IService<Picture> {
     PictureTagCategory listPictureTagCategory();
 
     Boolean review(ReviewPictureRequest request);
+
+    Integer batchUpload(BatchUploadPictureRequest request) throws IOException;
+
+    Boolean batchEdit(BatchEditPictureRequest request);
 }

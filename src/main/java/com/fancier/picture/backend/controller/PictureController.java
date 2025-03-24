@@ -13,10 +13,7 @@ import com.fancier.picture.backend.common.ResultUtils;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
 import com.fancier.picture.backend.model.picture.Picture;
-import com.fancier.picture.backend.model.picture.dto.PicturePageQuery;
-import com.fancier.picture.backend.model.picture.dto.ReviewPictureRequest;
-import com.fancier.picture.backend.model.picture.dto.UpdatePictureRequest;
-import com.fancier.picture.backend.model.picture.dto.UploadPictureRequest;
+import com.fancier.picture.backend.model.picture.dto.*;
 import com.fancier.picture.backend.model.picture.vo.PictureTagCategory;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
 import com.fancier.picture.backend.service.PictureService;
@@ -26,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 
 /**
  * @author <a href="https://github.com/hola1009">fancier</a>
@@ -112,5 +110,29 @@ public class PictureController {
     public BaseResponse<Boolean> reviewPicture(@RequestBody ReviewPictureRequest request) {
         return ResultUtils.success(pictureService.review(request));
     }
+
+    @PostMapping("/upload/batch")
+    @SaCheckRole(type = KitType.USER, value = UserRole.ADMIN_ROLE)
+    public BaseResponse<Integer> batchUpload(@RequestBody BatchUploadPictureRequest request) throws IOException {
+        return ResultUtils.success(pictureService.batchUpload(request));
+    }
+
+    @PostMapping("/edit/batch")
+    @SaCheckPermission(type = KitType.SPACE, value = SpacePermission.PICTURE_EDIT)
+    public BaseResponse<Boolean> batchEdit(@RequestBody BatchEditPictureRequest request) {
+        return ResultUtils.success(pictureService.batchEdit(request));
+    }
+
+    // todo
+    public BaseResponse<?> searchWithPicture() {
+        return null;
+    }
+
+    // todo
+    public BaseResponse<?> searchByColor() {
+        return null;
+    }
+
+
 
 }

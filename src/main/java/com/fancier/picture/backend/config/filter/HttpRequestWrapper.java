@@ -1,6 +1,7 @@
 package com.fancier.picture.backend.config.filter;
 
 import cn.hutool.core.util.CharsetUtil;
+import lombok.Getter;
 
 import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
@@ -15,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * @author <a href="https://github.com/hola1009">fancier</a>
  **/
+@Getter
 public class HttpRequestWrapper extends HttpServletRequestWrapper {
     private final String body;
     /**
@@ -63,7 +65,7 @@ public class HttpRequestWrapper extends HttpServletRequestWrapper {
             }
 
             @Override
-            public int read() throws IOException {
+            public int read() {
                 return byteArrayInputStream.read();
             }
         };
@@ -74,7 +76,4 @@ public class HttpRequestWrapper extends HttpServletRequestWrapper {
         return new BufferedReader(new InputStreamReader(this.getInputStream(), StandardCharsets.UTF_8));
     }
 
-    public String getBody() {
-        return body;
-    }
 }
