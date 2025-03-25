@@ -1,7 +1,12 @@
 package com.fancier.picture.backend.mapper;
 
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.fancier.picture.backend.model.spaceUser.SpaceUser;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.fancier.picture.backend.model.spaceUser.dto.SpaceUserQueryRequest;
 
 /**
 * @author Fanfan
@@ -11,6 +16,16 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 */
 public interface SpaceUserMapper extends BaseMapper<SpaceUser> {
 
+    default Wrapper<SpaceUser> getQueryWrapper(SpaceUserQueryRequest req) {
+        QueryWrapper<SpaceUser> wrapper = new QueryWrapper<>();
+
+        wrapper.eq(ObjectUtil.isNotEmpty(req.getId()), "id", req.getId())
+        .eq(ObjectUtil.isNotEmpty(req.getSpaceId()), "space_id", req.getSpaceId())
+        .eq(ObjectUtil.isNotEmpty(req.getUserId()), "user_id", req.getUserId())
+        .eq(StrUtil.isNotBlank(req.getSpaceRole()), "space_role", req.getSpaceRole());
+
+        return wrapper;
+    }
 }
 
 

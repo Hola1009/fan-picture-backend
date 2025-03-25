@@ -2,6 +2,7 @@ package com.fancier.picture.backend.auth;
 
 
 import cn.dev33.satoken.stp.StpInterface;
+import cn.hutool.core.util.ObjectUtil;
 import com.fancier.picture.backend.auth.constant.KitType;
 import com.fancier.picture.backend.auth.constant.SpaceUserRole;
 import com.fancier.picture.backend.auth.constant.StpKit;
@@ -12,6 +13,7 @@ import com.fancier.picture.backend.auth.model.SpaceRole;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
 import com.fancier.picture.backend.model.picture.Picture;
+import com.fancier.picture.backend.model.spaceUser.SpaceUser;
 import com.fancier.picture.backend.model.user.vo.LoginUserVO;
 import com.fancier.picture.backend.service.PictureService;
 import com.fancier.picture.backend.service.SpaceUserService;
@@ -76,23 +78,36 @@ public class StpInterfaceImpl implements StpInterface {
         return Collections.singletonList(userRole);
     }
 
+
+    /**
+     * <h1>核心方法</h1>
+     */
+
     private List<String> getSpacePermissionList() {
         SpaceAuthContext spaceAuthContext = SpaceAuthHolder.get();
         String servletPath = spaceAuthContext.getServletPath();
         if (servletPath.startsWith("/picture")) {
             return handlePicturePath(spaceAuthContext);
+        } else if (servletPath.startsWith("/space")) {
+            return handleSpacePath(spaceAuthContext);
+        } else if (servletPath.startsWith("/spaceUser")) {
+            return handleSpaceUserPath(spaceAuthContext);
         }
 
         return Collections.emptyList();
     }
 
+
+
+
+
     /**
      * 图片模块需要校验权限的功能如下
-     * 1. 上传图片到指定图库
-     * 2. 更改指定图库中图片的地址
-     * 3. 删除图片
-     * 4. 根据 id 获取图片 VO (未在空间中的用户不能查看)
-     * 5. 编辑图片
+     * <ol>1. 上传图片到指定图库</ol>
+     * <ol>2. 更改指定图库中图片的地址</ol>
+     * <ol>3. 删除图片</ol>
+     * <ol>4. 根据 id 获取图片 VO (未在空间中的用户不能查看)</ol>
+     * <ol>5. 编辑图片</ol>
      */
     List<String> handlePicturePath(SpaceAuthContext spaceAuthContext) {
         // 没获取到就返回一个字段全为空的对象防止空指针异常
@@ -141,4 +156,57 @@ public class StpInterfaceImpl implements StpInterface {
         return spaceRolePermissionsMap.get(SpaceUserRole.VIEWER);
     }
 
+    /**
+     * 空间模块需要权限的操作有
+     * <ol>1. 删除空间</ol>
+     * <ol>2. 编辑空间</ol>
+     * 都只需要拿到空间 id 就可以了
+     */
+    List<String> handleSpacePath(SpaceAuthContext spaceAuthContext) {
+        LoginUserVO loginUser = (LoginUserVO) StpKit.SPACE.getSession().getLoginId();
+        Long userId = loginUser.getId();
+        // 系统如果是管理员的话
+        if(UserRole.ADMIN_ROLE.equals(loginUser.getUserRole())) {
+            return spaceRolePermissionsMap.get(SpaceUserRole.ADMIN);
+        }
+
+        Long spaceId = spaceAuthContext.getId();
+        String spaceRole = spaceUserService.getSpaceRole(userId, spaceId);
+
+        return spaceRolePermissionsMap.getOrDefault(spaceRole, Collections.emptyList());
+    }
+
+    /**
+     * 需要进行鉴权的操作
+     * <ol>1. 添加用户 会传 spaceId</ol>
+     * <ol>2. 删除用户 会传 spaceUserId</ol>
+     * <ol>3. 查询用户列表 会传 spaceId</ol>
+     * <ol>4. 编辑用户 会传 spaceUserId</ol>
+     */
+    List<String> handleSpaceUserPath(SpaceAuthContext spaceAuthContext) {
+        LoginUserVO loginUser = (LoginUserVO) StpKit.SPACE.getSession().getLoginId();
+        Long userId = loginUser.getId();
+
+        if(UserRole.ADMIN_ROLE.equals(loginUser.getUserRole())) {
+            return spaceRolePermissionsMap.get(SpaceUserRole.ADMIN);
+        }
+
+        Long spaceUserId = spaceAuthContext.getId();
+        Long spaceId = spaceAuthContext.getSpaceId();
+
+        // 如果没有传 spaceId 则通过 spaceUserId 来获取
+        if (ObjectUtil.isEmpty(spaceId) && ObjectUtil.isEmpty(spaceId)) {
+            SpaceUser byId = spaceUserService.getById(spaceUserId);
+            ThrowUtils.throwIf(byId == null, ErrorCode.PARAM_ERROR, "空间用户 id 非法");
+            spaceId = byId.getSpaceId();
+        }
+
+        // 根据 loginUserId 和 spaceId 来获取 权限
+        if (ObjectUtil.isNotEmpty(spaceId)) {
+            String spaceRole = spaceUserService.getSpaceRole(userId, spaceId);
+            return spaceRolePermissionsMap.get(spaceRole);
+        }
+
+        return Collections.emptyList();
+    }
 }

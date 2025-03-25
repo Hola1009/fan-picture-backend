@@ -136,6 +136,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
+    public List<UserVO> listVOByIds(List<Long> userIds) {
+        List<User> users = this.listByIds(userIds);
+
+        return users.stream().map(u -> {
+            UserVO userVO = new UserVO();
+            BeanUtils.copyProperties(u, userVO);
+            return userVO;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
     public UserVO getUserVO(Long id) {
         User byId = getById(id);
         UserVO userVO = new UserVO();

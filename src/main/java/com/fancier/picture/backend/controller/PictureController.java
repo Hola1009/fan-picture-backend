@@ -96,7 +96,7 @@ public class PictureController {
 
     @PostMapping("/edit")
     @SaCheckPermission(type = KitType.SPACE, value = SpacePermission.PICTURE_EDIT)
-    public BaseResponse<Boolean> edit(@RequestBody UpdatePictureRequest request) {
+    public BaseResponse<Boolean> edit(@RequestBody @Validated UpdatePictureRequest request) {
         return ResultUtils.success(pictureService.edit(request));
     }
 
@@ -107,13 +107,13 @@ public class PictureController {
     }
     @GetMapping("/review")
     @SaCheckRole(type = KitType.USER, value = UserRole.ADMIN_ROLE)
-    public BaseResponse<Boolean> reviewPicture(@RequestBody ReviewPictureRequest request) {
+    public BaseResponse<Boolean> reviewPicture(@RequestBody @Validated ReviewPictureRequest request) {
         return ResultUtils.success(pictureService.review(request));
     }
 
     @PostMapping("/upload/batch")
     @SaCheckRole(type = KitType.USER, value = UserRole.ADMIN_ROLE)
-    public BaseResponse<Integer> batchUpload(@RequestBody BatchUploadPictureRequest request) throws IOException {
+    public BaseResponse<Integer> batchUpload(@RequestBody @Validated BatchUploadPictureRequest request) throws IOException {
         return ResultUtils.success(pictureService.batchUpload(request));
     }
 

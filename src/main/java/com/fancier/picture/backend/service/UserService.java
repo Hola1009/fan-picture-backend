@@ -7,6 +7,8 @@ import com.fancier.picture.backend.model.user.dto.*;
 import com.fancier.picture.backend.model.user.vo.LoginUserVO;
 import com.fancier.picture.backend.model.user.vo.UserVO;
 
+import java.util.List;
+
 /**
 * @author Fanfan
 * @description 针对表【user(用户)】的数据库操作Service
@@ -32,4 +34,6 @@ public interface UserService extends IService<User> {
     Page<UserVO> getUsers(UserPageQuery pageQuery);
 
     LoginUserVO getLoginUser();
+
+    List<UserVO> listVOByIds(List<Long> userIds);
 }

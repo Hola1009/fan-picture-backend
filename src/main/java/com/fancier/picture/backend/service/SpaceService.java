@@ -1,8 +1,14 @@
 package com.fancier.picture.backend.service;
 
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.fancier.picture.backend.model.space.Space;
+import com.fancier.picture.backend.model.space.dto.AddSpaceRequest;
+import com.fancier.picture.backend.model.space.dto.EditSpaceRequest;
+import com.fancier.picture.backend.model.space.dto.SpacePageQuery;
+import com.fancier.picture.backend.model.space.dto.UpdateSpaceRequest;
+import com.fancier.picture.backend.model.space.vo.SpaceVO;
 
 /**
 * @author Fanfan
@@ -11,4 +17,13 @@ import com.fancier.picture.backend.model.space.Space;
 */
 public interface SpaceService extends IService<Space> {
 
+    Long addSpace(AddSpaceRequest request);
+
+    Boolean updateSpace(UpdateSpaceRequest request);
+
+    Page<Space> pageQuery(SpacePageQuery pageQuery);
+
+    Page<SpaceVO> pageQueryVO(SpacePageQuery pageQuery);
+
+    Boolean edit(EditSpaceRequest request);
 }
