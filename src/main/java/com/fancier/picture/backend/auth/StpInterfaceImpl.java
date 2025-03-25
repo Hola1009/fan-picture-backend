@@ -171,6 +171,10 @@ public class StpInterfaceImpl implements StpInterface {
         }
 
         Long spaceId = spaceAuthContext.getId();
+        // 对于 spaceAnalyze 模块不会传 id, 只会传 spaceId
+        if (spaceId == null) {
+            spaceId = spaceAuthContext.getSpaceId();
+        }
         String spaceRole = spaceUserService.getSpaceRole(userId, spaceId);
 
         return spaceRolePermissionsMap.getOrDefault(spaceRole, Collections.emptyList());
