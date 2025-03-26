@@ -17,7 +17,9 @@ import com.fancier.picture.backend.model.picture.dto.*;
 import com.fancier.picture.backend.model.picture.vo.PictureTagCategory;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
 import com.fancier.picture.backend.service.PictureService;
+import com.fancier.picture.backend.thirdparty.aliyunai.AliYunAiApi;
 import com.fancier.picture.backend.thirdparty.aliyunai.model.CreateOutPaintingTaskResponse;
+import com.fancier.picture.backend.thirdparty.aliyunai.model.QueryOutPaintingTaskResponse;
 import com.fancier.picture.backend.thirdparty.imageSearch.model.ImageSearchResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -37,6 +39,8 @@ import java.util.List;
 public class PictureController {
 
     private final PictureService pictureService;
+
+    private final AliYunAiApi aliYunAiApi;
 
     @PostMapping("/upload")
     @SaCheckLogin(type = KitType.USER)
@@ -143,5 +147,9 @@ public class PictureController {
         return ResultUtils.success(pictureService.createPictureOutPaintingTask(request));
     }
 
+    @GetMapping("/out_painting/get_task")
+    public BaseResponse<QueryOutPaintingTaskResponse> getPictureOutPaintingTask(@NotNull String taskId) {
+        return ResultUtils.success(aliYunAiApi.queryOutPaintingTaskResponse(taskId));
+    }
 
 }

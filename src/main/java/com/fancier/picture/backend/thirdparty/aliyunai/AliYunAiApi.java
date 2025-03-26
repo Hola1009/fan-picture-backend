@@ -8,6 +8,7 @@ import com.fancier.picture.backend.common.exception.BusinessException;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.thirdparty.aliyunai.model.CreateOutPaintingTaskRequest;
 import com.fancier.picture.backend.thirdparty.aliyunai.model.CreateOutPaintingTaskResponse;
+import com.fancier.picture.backend.thirdparty.aliyunai.model.QueryOutPaintingTaskResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -22,7 +23,9 @@ public class AliYunAiApi {
     @Value("${aliYunAi.apiKey}")
     private String apiKey;
 
-    public static final String CREATE_OUT_PAINTING_TASK_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/out-painting";
+    private static final String CREATE_OUT_PAINTING_TASK_URL = "https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/out-painting";
+
+    private static final String QUERY_OUT_PAINTING_TASK_URL = "https://dashscope.aliyuncs.com/api/v1/tasks/";
 
 
     public CreateOutPaintingTaskResponse createOutPaintingTask(String url, CreateOutPaintingTaskRequest.Parameters parameters) {
@@ -56,6 +59,19 @@ public class AliYunAiApi {
             }
 
             return res;
+        }
+    }
+
+    public QueryOutPaintingTaskResponse queryOutPaintingTaskResponse(String taskId) {
+        HttpRequest get = HttpRequest.get(QUERY_OUT_PAINTING_TASK_URL + taskId);
+        get.header("Authorization", "Bearer " + apiKey);
+        try (HttpResponse response = get.execute()) {
+            if (!response.isOk()) {
+                log.error("请求异常：{}", response.body());
+                throw new BusinessException(ErrorCode.OPERATION_ERROR, "AI 扩图任务查询失败");
+            }
+
+            return JSONUtil.toBean(response.body(), QueryOutPaintingTaskResponse.class);
         }
     }
 }
