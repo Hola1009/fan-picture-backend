@@ -17,6 +17,8 @@ import com.fancier.picture.backend.model.picture.dto.*;
 import com.fancier.picture.backend.model.picture.vo.PictureTagCategory;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
 import com.fancier.picture.backend.service.PictureService;
+import com.fancier.picture.backend.thirdparty.aliyunai.model.CreateOutPaintingTaskResponse;
+import com.fancier.picture.backend.thirdparty.imageSearch.model.ImageSearchResult;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author <a href="https://github.com/hola1009">fancier</a>
@@ -123,16 +126,22 @@ public class PictureController {
         return ResultUtils.success(pictureService.batchEdit(request));
     }
 
-    // todo
-    public BaseResponse<?> searchWithPicture() {
-        return null;
+    @PostMapping("/search/picture")
+    public BaseResponse<List<ImageSearchResult>> searchWithPicture(@RequestBody @Validated SearchPictureByPictureRequest request) {
+        return ResultUtils.success(pictureService.searchWithPicture(request));
     }
 
-    // todo
-    public BaseResponse<?> searchByColor() {
-        return null;
+    @PostMapping("/search/color")
+    public BaseResponse<List<PictureVO>> searchByColor(SearchPictureByColorRequest request) {
+        return ResultUtils.success(pictureService.searchByColor(request));
     }
 
+    @PostMapping("/out_painting/create_task")
+    @SaCheckPermission(type = KitType.SPACE, value = SpacePermission.PICTURE_EDIT)
+    public BaseResponse<CreateOutPaintingTaskResponse> createPictureOutPaintingTask(
+            @RequestBody @Validated CreatePictureOutPaintingTaskRequest request) {
+        return ResultUtils.success(pictureService.createPictureOutPaintingTask(request));
+    }
 
 
 }

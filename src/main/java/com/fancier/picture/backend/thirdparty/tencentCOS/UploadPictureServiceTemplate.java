@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
 import com.fancier.picture.backend.thirdparty.tencentCOS.model.UploadPictureResult;
+import com.fancier.picture.backend.util.ColorTransformUtils;
 import com.qcloud.cos.model.PutObjectResult;
 import com.qcloud.cos.model.ciModel.persistence.CIObject;
 import com.qcloud.cos.model.ciModel.persistence.CIUploadResult;
@@ -102,7 +103,7 @@ public abstract class UploadPictureServiceTemplate {
         res.setPicWidth(width);
         res.setPicHeight(height);
         res.setPicScale(NumberUtil.round(width * 1.0 / height, 2).doubleValue());
-        res.setPicColor(picColor);
+        res.setPicColor(ColorTransformUtils.getStandardColor(picColor));
         res.setPicFormat(picFormat);
         res.setPicSize(picSize);
     }

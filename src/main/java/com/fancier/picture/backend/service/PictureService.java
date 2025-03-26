@@ -6,8 +6,11 @@ import com.fancier.picture.backend.model.picture.Picture;
 import com.fancier.picture.backend.model.picture.dto.*;
 import com.fancier.picture.backend.model.picture.vo.PictureTagCategory;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
+import com.fancier.picture.backend.thirdparty.aliyunai.model.CreateOutPaintingTaskResponse;
+import com.fancier.picture.backend.thirdparty.imageSearch.model.ImageSearchResult;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
 * @author Fanfan
@@ -41,4 +44,10 @@ public interface PictureService extends IService<Picture> {
     Integer batchUpload(BatchUploadPictureRequest request) throws IOException;
 
     Boolean batchEdit(BatchEditPictureRequest request);
+
+    List<ImageSearchResult> searchWithPicture(SearchPictureByPictureRequest request);
+
+    List<PictureVO> searchByColor(SearchPictureByColorRequest request);
+
+    CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest request);
 }

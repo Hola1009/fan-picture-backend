@@ -21,9 +21,14 @@ import com.fancier.picture.backend.model.picture.vo.PictureVO;
 import com.fancier.picture.backend.model.space.Space;
 import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.service.PictureService;
+import com.fancier.picture.backend.thirdparty.aliyunai.AliYunAiApi;
+import com.fancier.picture.backend.thirdparty.aliyunai.model.CreateOutPaintingTaskResponse;
+import com.fancier.picture.backend.thirdparty.imageSearch.ImageSearchApiFacade;
+import com.fancier.picture.backend.thirdparty.imageSearch.model.ImageSearchResult;
 import com.fancier.picture.backend.thirdparty.tencentCOS.UploadPictureByFileService;
 import com.fancier.picture.backend.thirdparty.tencentCOS.UploadPictureByUrlService;
 import com.fancier.picture.backend.thirdparty.tencentCOS.model.UploadPictureResult;
+import com.fancier.picture.backend.util.ColorSimilarUtils;
 import com.fancier.picture.backend.util.JsonFileParserUtil;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
@@ -37,7 +42,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
+import java.awt.*;
 import java.io.IOException;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -64,6 +71,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private final PictureMapper pictureMapper;
 
     private final StringRedisTemplate stringRedisTemplate;
+
+    private final AliYunAiApi aliYunAiApi;
 
     private static final List<String> tagList;
     private static final List<String> categoryList;
@@ -196,8 +205,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         String json = operations.get(key);
 
         if (StrUtil.isNotBlank(json)) {
-            Page<PictureVO> res = JSONUtil.toBean(json, Page.class);
-            return res;
+            return JSONUtil.toBean(json, Page.class, true);
         }
 
         // 2. 没查到查数据库, 并将结果放入 redis 缓存
@@ -307,6 +315,47 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         fillPictureWithNameRule(pictures, request.getNameRule());
 
         return this.updateBatchById(pictures);
+    }
+
+    @Override
+    public List<ImageSearchResult> searchWithPicture(SearchPictureByPictureRequest request) {
+        Picture byId = this.getById(request.getPictureId());
+
+        return ImageSearchApiFacade.searchImage(byId.getUrl(), 0);
+    }
+
+    @Override
+    public List<PictureVO> searchByColor(SearchPictureByColorRequest request) {
+
+        List<Picture> pictures = this.lambdaQuery()
+                .eq(Picture::getSpaceId, request.getSpaceId())
+                .list();
+
+        Color targetColor = Color.decode(request.getPicColor());
+
+        return pictures.stream().sorted(Comparator.comparingDouble(p -> {
+            String hexColor = p.getPicColor();
+            if (StrUtil.isBlank(hexColor)) {
+                return Double.MAX_VALUE;
+            }
+            Color pictureColor = Color.decode(hexColor);
+            // 进行倒叙排序
+            return -ColorSimilarUtils
+                    .calculateSimilarity(targetColor, pictureColor);
+        })).limit(12).map(p -> {
+            PictureVO pictureVO = new PictureVO();
+            BeanUtils.copyProperties(p, pictureVO);
+            return pictureVO;
+        }).collect(Collectors.toList());
+    }
+
+    @Override
+    public CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest request) {
+        Long pictureId = request.getPictureId();
+        Picture byId = this.getById(pictureId);
+        ThrowUtils.throwIf(byId == null, ErrorCode.PARAM_ERROR, "需要修改的图片不存在");
+
+        return aliYunAiApi.createOutPaintingTask(byId.getUrl(), request.getParameters());
     }
 
 
