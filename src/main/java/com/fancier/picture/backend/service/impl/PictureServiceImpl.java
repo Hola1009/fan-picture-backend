@@ -8,6 +8,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fancier.picture.backend.auth.constant.UserRole;
 import com.fancier.picture.backend.common.exception.BusinessException;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
@@ -19,6 +20,7 @@ import com.fancier.picture.backend.model.picture.dto.*;
 import com.fancier.picture.backend.model.picture.vo.PictureTagCategory;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
 import com.fancier.picture.backend.model.space.Space;
+import com.fancier.picture.backend.model.user.vo.LoginUserVO;
 import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.service.PictureService;
 import com.fancier.picture.backend.thirdparty.aliyunai.AliYunAiApi;
@@ -44,6 +46,7 @@ import org.springframework.util.DigestUtils;
 
 import java.awt.*;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
@@ -135,7 +138,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         PictureVO pictureVO = new PictureVO();
         BeanUtils.copyProperties(picture, pictureVO);
-        autoFillReviewStatus(picture);
+        fillReviewStatus(picture);
         return pictureVO;
     }
 
@@ -367,15 +370,18 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         String jsonTagStr = JSONUtil.toJsonStr(tags);
         picture.setTags(jsonTagStr);
-        autoFillReviewStatus(picture);
+        fillReviewStatus(picture);
     }
 
-    private void autoFillReviewStatus(Picture picture) {
-        Boolean isAdmin = userService.isAdmin();
-        if (isAdmin) {
-            picture.setReviewStatus(ReviewType.REVIEWING.getValue());
-        } else {
+    private void fillReviewStatus(Picture picture) {
+        LoginUserVO loginUser = userService.getLoginUser();
+        if (UserRole.ADMIN_ROLE.equals(loginUser.getUserRole())) {
+            picture.setReviewerId(loginUser.getId());
+            picture.setReviewMessage("自动过审");
             picture.setReviewStatus(ReviewType.PASS.getValue());
+            picture.setReviewTime(LocalDateTime.now());
+        } else {
+            picture.setReviewStatus(ReviewType.REVIEWING.getValue());
         }
     }
 

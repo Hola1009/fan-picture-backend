@@ -9,7 +9,7 @@ import com.fancier.picture.backend.auth.constant.StpKit;
 import com.fancier.picture.backend.auth.constant.UserRole;
 import com.fancier.picture.backend.auth.helper.SpaceAuthHolder;
 import com.fancier.picture.backend.auth.model.SpaceAuthContext;
-import com.fancier.picture.backend.auth.model.SpaceRole;
+import com.fancier.picture.backend.auth.model.SpaceUserAuth;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
 import com.fancier.picture.backend.model.picture.Picture;
@@ -17,27 +17,17 @@ import com.fancier.picture.backend.model.spaceUser.SpaceUser;
 import com.fancier.picture.backend.model.user.vo.LoginUserVO;
 import com.fancier.picture.backend.service.PictureService;
 import com.fancier.picture.backend.service.SpaceUserService;
-import com.fancier.picture.backend.util.JsonFileParserUtil;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author <a href="https://github.com/hola1009">fancier</a>
  **/
 @Component    // 保证此类被 SpringBoot 扫描，完成 Sa-Token 的自定义权限验证扩展
 public class StpInterfaceImpl implements StpInterface {
-
-    private static final Map<String , List<String>> spaceRolePermissionsMap;
-
-    static {
-        List<SpaceRole> spaceRoles = JsonFileParserUtil.parse2ListFormResource(SpaceRole.class, "biz/spaceUserRoles.json");
-        spaceRolePermissionsMap = spaceRoles.stream().collect(Collectors.toMap(SpaceRole::getKey, SpaceRole::getPermissions));
-    }
 
 
     @Resource
@@ -119,12 +109,12 @@ public class StpInterfaceImpl implements StpInterface {
 
         // 用户为管理员返回管理员权限
         if (UserRole.ADMIN_ROLE.equals(loginUser.getUserRole())) {
-            return spaceRolePermissionsMap.get(SpaceUserRole.ADMIN);
+            return SpaceUserAuth.getPermissionsByRole(SpaceUserRole.ADMIN);
         }
 
         // 普通用户操作公共图库
         if (spaceId == null && pictureId == null) {
-            return spaceRolePermissionsMap.get(SpaceUserRole.EDITOR);
+            return SpaceUserAuth.getPermissionsByRole(SpaceUserRole.EDITOR);
         }
 
         Picture picture;
@@ -144,16 +134,16 @@ public class StpInterfaceImpl implements StpInterface {
         // 优先从空间里返回权限
         if (spaceId != null) {
             String spaceRole = spaceUserService.getSpaceRole(userId, spaceId);
-            return spaceRolePermissionsMap.getOrDefault(spaceRole, Collections.emptyList());
+            return SpaceUserAuth.getPermissionsByRole(spaceRole);
         }
 
         // 走到这里 space 为 null pictureId 不为 null, 表示是操作公共图库的图片
         // 如果是共有图库的图片用户者则享受编辑权限
         if (userId != null && userId.equals(ownerId)) {
-            return spaceRolePermissionsMap.get(SpaceUserRole.EDITOR);
+            return SpaceUserAuth.getPermissionsByRole(SpaceUserRole.EDITOR);
         }
 
-        return spaceRolePermissionsMap.get(SpaceUserRole.VIEWER);
+        return SpaceUserAuth.getPermissionsByRole(SpaceUserRole.VIEWER);
     }
 
     /**
@@ -167,7 +157,7 @@ public class StpInterfaceImpl implements StpInterface {
         Long userId = loginUser.getId();
         // 系统如果是管理员的话
         if(UserRole.ADMIN_ROLE.equals(loginUser.getUserRole())) {
-            return spaceRolePermissionsMap.get(SpaceUserRole.ADMIN);
+            return SpaceUserAuth.getPermissionsByRole(SpaceUserRole.ADMIN);
         }
 
         Long spaceId = spaceAuthContext.getId();
@@ -177,7 +167,7 @@ public class StpInterfaceImpl implements StpInterface {
         }
         String spaceRole = spaceUserService.getSpaceRole(userId, spaceId);
 
-        return spaceRolePermissionsMap.getOrDefault(spaceRole, Collections.emptyList());
+        return SpaceUserAuth.getPermissionsByRole(spaceRole);
     }
 
     /**
@@ -192,7 +182,7 @@ public class StpInterfaceImpl implements StpInterface {
         Long userId = loginUser.getId();
 
         if(UserRole.ADMIN_ROLE.equals(loginUser.getUserRole())) {
-            return spaceRolePermissionsMap.get(SpaceUserRole.ADMIN);
+            return SpaceUserAuth.getPermissionsByRole(SpaceUserRole.ADMIN);
         }
 
         Long spaceUserId = spaceAuthContext.getId();
@@ -208,7 +198,7 @@ public class StpInterfaceImpl implements StpInterface {
         // 根据 loginUserId 和 spaceId 来获取 权限
         if (ObjectUtil.isNotEmpty(spaceId)) {
             String spaceRole = spaceUserService.getSpaceRole(userId, spaceId);
-            return spaceRolePermissionsMap.get(spaceRole);
+            return SpaceUserAuth.getPermissionsByRole(spaceRole);
         }
 
         return Collections.emptyList();

@@ -136,6 +136,7 @@ public class PictureController {
     }
 
     @PostMapping("/search/color")
+    @SaCheckPermission(type = KitType.SPACE, value = SpacePermission.PICTURE_VIEW)
     public BaseResponse<List<PictureVO>> searchByColor(SearchPictureByColorRequest request) {
         return ResultUtils.success(pictureService.searchByColor(request));
     }
