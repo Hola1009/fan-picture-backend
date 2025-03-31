@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
@@ -19,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * @author <a href="https://github.com/hola1009">fancier</a>
@@ -44,7 +44,7 @@ public abstract class UploadPictureServiceTemplate {
 
         ThrowUtils.throwIf(StrUtil.isBlankIfStr(fileName), ErrorCode.PARAM_ERROR, "文件名不能为空");
         String suffix = FileUtil.getSuffix(fileName);
-        String keyName = UUID.randomUUID() + DateUtil.formatDate(new Date());
+        String keyName = RandomUtil.randomString(16) + DateUtil.formatDate(new Date());
         String uploadPath = String.format("%s/%s.%s", uploadPathPrefix, keyName, suffix);
 
         File tempFile = null;
@@ -85,10 +85,10 @@ public abstract class UploadPictureServiceTemplate {
         if (CollUtil.isNotEmpty(objectList)) {
             CIObject compressPic = objectList.get(0);
             CIObject thumbnail = objectList.get(1);
-            res.setUrl(compressPic.getLocation());
-            res.setPicName(compressPic.getKey());
+            res.setUrl(tencentCOSConfigure.getHost() + "/" + compressPic.getKey());
+            res.setPicName(FileUtil.mainName(fileName));
             setCommonImageInfo(res, compressPic.getWidth(), compressPic.getHeight(), imageInfo.getAve(), compressPic.getFormat(), Long.valueOf(compressPic.getSize()));
-            res.setThumbnailUrl(thumbnail.getLocation());
+            res.setThumbnailUrl(tencentCOSConfigure.getHost() + "/" + thumbnail.getKey());
         } else {
             String url = tencentCOSConfigure.getHost() + "/" + uploadPath;
             res.setUrl(url);

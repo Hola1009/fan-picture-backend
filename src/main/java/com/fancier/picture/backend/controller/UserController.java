@@ -52,7 +52,7 @@ public class UserController {
         LoginUserVO loginUser = userService.getLoginUser();
         return ResultUtils.success(loginUser);
     }
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public BaseResponse<?> logout() {
         StpKit.USER.logout();
         return ResultUtils.success(true);

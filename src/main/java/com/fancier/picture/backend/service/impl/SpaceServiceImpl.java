@@ -1,5 +1,6 @@
 package com.fancier.picture.backend.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -58,15 +59,18 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
         // 校验空间数量, 公有私有最多各一个
         LambdaQueryChainWrapper<Space> wrapper = lambdaQuery()
                 .select(Space::getSpaceType).eq(Space::getUserId, userid);
-        List<Space> list = list(wrapper);
+
+        List<Space> list = list(wrapper.getWrapper());
         ThrowUtils.throwIf(list.size() >= 2, ErrorCode.PARAM_ERROR, "空间数量已达到上限");
 
         // 重复类型的空间不允许添加
-        Space oldSpace = list.get(0);
-        ThrowUtils.throwIf(oldSpace != null
-                        && Objects.equals(oldSpace.getSpaceType(), request.getSpaceType()),
-                ErrorCode.PARAM_ERROR, "该类型空间已存在");
+        if (CollUtil.isNotEmpty(list)) {
+            Space oldSpace = list.get(0);
+            ThrowUtils.throwIf(oldSpace != null
+                            && Objects.equals(oldSpace.getSpaceType(), request.getSpaceType()),
+                    ErrorCode.PARAM_ERROR, "该类型空间已存在");
 
+        }
         // 创建空间
         Space space = new Space();
         BeanUtils.copyProperties(request, space);

@@ -8,6 +8,8 @@ import com.fancier.picture.backend.common.exception.ThrowUtils;
 import com.fancier.picture.backend.mapper.SpaceMapper;
 import com.fancier.picture.backend.mapper.SpaceUserMapper;
 import com.fancier.picture.backend.model.space.Space;
+import com.fancier.picture.backend.model.space.constant.SpaceTypeEnum;
+import com.fancier.picture.backend.model.space.vo.SpaceVO;
 import com.fancier.picture.backend.model.spaceUser.SpaceUser;
 import com.fancier.picture.backend.model.spaceUser.dto.AddSpaceUserRequest;
 import com.fancier.picture.backend.model.spaceUser.dto.SpaceUserEditRequest;
@@ -22,6 +24,9 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -109,11 +114,25 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
                 spaceUserMapper.getQueryWrapper(spaceUserQueryRequest)
         );
 
+        List<Long> spaceIdList = spaceUserList.stream().map(SpaceUser::getSpaceId).collect(Collectors.toList());
+
+
+        Map<Long, Space> idSpaceMap = spaceMapper.selectByIds(spaceIdList).stream()
+                .collect(Collectors.toMap(Space::getId, Function.identity()));
+
+
         return spaceUserList.stream().map(o -> {
             SpaceUserVO spaceUserVO = new SpaceUserVO();
+
             BeanUtils.copyProperties(o, spaceUserVO);
+            SpaceVO spaceVO = new SpaceVO();
+
+            BeanUtils.copyProperties(idSpaceMap.get(o.getSpaceId()), spaceVO);
+            spaceUserVO.setSpace(spaceVO);
             return spaceUserVO;
-        }).collect(Collectors.toList());
+        })
+        .filter(o -> Objects.equals(o.getSpace().getSpaceType(), SpaceTypeEnum.TEAM.getValue()))
+        .collect(Collectors.toList());
     }
 }
 

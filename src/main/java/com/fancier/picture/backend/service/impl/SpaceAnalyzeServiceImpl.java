@@ -19,10 +19,7 @@ import com.fancier.picture.backend.service.SpaceAnalyzeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -106,6 +103,7 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
 
         return pictures.stream()
+                .filter(Objects::nonNull)
                 .map(Picture::getTags)
                 // 经行扁平化
                 .flatMap(tags -> JSONUtil.toList(tags, String.class).stream())
@@ -143,19 +141,19 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
         QueryWrapper<Picture> wrapper = new QueryWrapper<>();
 
         Long userId = request.getUserId();
-        wrapper.eq("user_id", userId);
+        wrapper.eq(Objects.nonNull(userId), "user_id", userId);
 
 
         String timeDimension = request.getTimeDimension();
         switch (timeDimension) {
             case "day":
-                wrapper.select("DATE_FORMAT(createTime, '%Y-%m-%d') as period", "count(*) as count");
+                wrapper.select("DATE_FORMAT(create_time, '%Y-%m-%d') as period", "count(*) as count");
                 break;
             case "week":
-                wrapper.select("YEARWEEK(createTime) as period", "count(*) as count");
+                wrapper.select("YEARWEEK(create_time) as period", "count(*) as count");
                 break;
             case "month":
-                wrapper.select("DATE_FORMAT(createTime, '%Y-%m') as period", "count(*) as count");
+                wrapper.select("DATE_FORMAT(create_time, '%Y-%m') as period", "count(*) as count");
                 break;
             default:
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的时间维度");

@@ -79,7 +79,7 @@ public class PictureController {
         return ResultUtils.success(pictureService.getById(id));
     }
 
-    @PostMapping("/get/vo")
+    @GetMapping("/get/vo")
     public BaseResponse<PictureVO> getVO(@NotNull Long id) {
         return ResultUtils.success(pictureService.getVOById(id));
     }
@@ -90,7 +90,7 @@ public class PictureController {
     }
 
     @PostMapping("list/page/vo")
-    @SaCheckRole(type = KitType.SPACE, value = SpacePermission.PICTURE_VIEW)
+    @SaCheckPermission(type = KitType.SPACE, value = SpacePermission.PICTURE_VIEW)
     public BaseResponse<Page<PictureVO>> pictureVOPageQuery(@RequestBody PicturePageQuery pageQuery) {
         return ResultUtils.success(pictureService.voPageQuery(pageQuery));
     }
@@ -112,7 +112,7 @@ public class PictureController {
     public BaseResponse<PictureTagCategory> listPictureTagCategory() {
         return ResultUtils.success(pictureService.listPictureTagCategory());
     }
-    @GetMapping("/review")
+    @PostMapping("/review")
     @SaCheckRole(type = KitType.USER, value = UserRole.ADMIN_ROLE)
     public BaseResponse<Boolean> reviewPicture(@RequestBody @Validated ReviewPictureRequest request) {
         return ResultUtils.success(pictureService.review(request));

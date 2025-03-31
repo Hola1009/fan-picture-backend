@@ -180,6 +180,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     @Override
     public Page<PictureVO> voPageQuery(PicturePageQuery pageQuery) {
+        // 普通用户只能看到过审的内容
+        pageQuery.setReviewStatus(1);
         Page<Picture> picturePage = pictureMapper.pageQuery(pageQuery);
         List<Picture> records = picturePage.getRecords();
 

@@ -20,8 +20,8 @@ public interface SpaceMapper extends BaseMapper<Space> {
         QueryWrapper<Space> wrapper = new QueryWrapper<Space>()
                 .eq(ObjectUtil.isNotEmpty(pageQuery.getId()), "id", pageQuery.getId())
                 .eq(ObjectUtil.isNotEmpty(pageQuery.getUserId()), "user_id", pageQuery.getUserId())
-                .eq(ObjectUtil.isNotEmpty(pageQuery.getSpaceLevel()), "is_public", pageQuery.getSpaceLevel())
-                .eq(ObjectUtil.isNotEmpty(pageQuery.getSpaceType()), "is_public", pageQuery.getSpaceType())
+                .eq(ObjectUtil.isNotEmpty(pageQuery.getSpaceLevel()), "space_level", pageQuery.getSpaceLevel())
+                .eq(ObjectUtil.isNotEmpty(pageQuery.getSpaceType()), "space_type", pageQuery.getSpaceType())
                 .like(StrUtil.isNotBlank(pageQuery.getSpaceName()), "name", pageQuery.getSpaceName());
 
 

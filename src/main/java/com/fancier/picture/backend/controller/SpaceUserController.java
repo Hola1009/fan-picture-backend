@@ -67,6 +67,9 @@ public class SpaceUserController {
         return ResultUtils.success(spaceUserService.edit(spaceUserEditRequest));
     }
 
+    /**
+     * 查询我加入的团队空间列表
+     */
     @PostMapping("/list/my")
     public BaseResponse<List<SpaceUserVO>> listMyTeamSpace() {
 

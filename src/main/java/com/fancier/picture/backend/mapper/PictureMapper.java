@@ -31,17 +31,17 @@ public interface PictureMapper extends BaseMapper<Picture> {
                 .isNull(pageQuery.isNullSpaceId(), "space_id")
                 .like(StrUtil.isNotBlank(pageQuery.getPicName()), "pic_name", pageQuery.getPicName())
                 .like(StrUtil.isNotBlank(pageQuery.getIntroduction()), "introduction", pageQuery.getIntroduction())
-                .like(StrUtil.isNotBlank(pageQuery.getReviewMessage()), "reviewMessage", pageQuery.getReviewMessage())
-                .eq(StrUtil.isNotBlank(pageQuery.getIntroduction()), "category", pageQuery.getCategory())
+                .like(StrUtil.isNotBlank(pageQuery.getReviewMessage()), "review_message", pageQuery.getReviewMessage())
+                .eq(StrUtil.isNotBlank(pageQuery.getCategory()), "category", pageQuery.getCategory())
                 .eq(ObjectUtil.isNotEmpty(pageQuery.getPicSize()), "pic_size", pageQuery.getPicSize())
                 .eq(ObjectUtil.isNotEmpty(pageQuery.getPicHeight()), "pic_height", pageQuery.getPicHeight())
                 .eq(ObjectUtil.isNotEmpty(pageQuery.getPicWidth()), "pic_width", pageQuery.getPicWidth())
                 .eq(ObjectUtil.isNotEmpty(pageQuery.getPicScale()), "pic_scale", pageQuery.getPicScale())
                 .eq(StrUtil.isNotBlank(pageQuery.getPicFormat()), "pic_format", pageQuery.getPicFormat())
                 .eq(ObjectUtil.isNotEmpty(pageQuery.getReviewStatus()), "review_status", pageQuery.getReviewStatus())
-                .eq(ObjUtil.isNotEmpty(pageQuery.getReviewerId()), "reviewerId", pageQuery.getReviewerId())
-                .ge(ObjUtil.isNotEmpty(pageQuery.getStartEditTime()), "editTime", pageQuery.getStartEditTime())
-                .lt(ObjUtil.isNotEmpty(pageQuery.getEndEditTime()), "editTime", pageQuery.getEndEditTime());
+                .eq(ObjUtil.isNotEmpty(pageQuery.getReviewerId()), "reviewer_id", pageQuery.getReviewerId())
+                .ge(ObjUtil.isNotEmpty(pageQuery.getStartEditTime()), "edit_time", pageQuery.getStartEditTime())
+                .lt(ObjUtil.isNotEmpty(pageQuery.getEndEditTime()), "edit_time", pageQuery.getEndEditTime());
 
         List<String> tags = pageQuery.getTags();
         if (CollUtil.isNotEmpty(tags)) {

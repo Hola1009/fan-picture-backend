@@ -29,7 +29,7 @@ public class PictureVO {
     /**
      * 图片名称
      */
-    private String name;
+    private String picName;
 
     /**
      * 简介

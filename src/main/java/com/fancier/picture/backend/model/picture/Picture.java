@@ -24,7 +24,7 @@ public class Picture implements Serializable {
 
     private String introduction;
 
-    private String category;
+    private String category = "无";
 
     private String tags;
 

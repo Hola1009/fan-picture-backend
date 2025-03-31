@@ -57,7 +57,7 @@ public class AliYunAiApi {
                 log.error("请求异常：{}", errorMessage);
                 throw new BusinessException(ErrorCode.OPERATION_ERROR, "AI 扩图失败，" + errorMessage);
             }
-
+            log.info("AI 阔图任务执行成功");
             return res;
         }
     }

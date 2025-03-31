@@ -99,7 +99,7 @@ public class SpaceController {
         return ResultUtils.success(spaceService.edit(request));
     }
 
-    @GetMapping("/list")
+    @GetMapping("/list/level")
     public BaseResponse<List<SpaceLevel>> getSpaceLevelList() {
         return ResultUtils.success(
                 Arrays.stream(SpaceLevelEnum.values()).map(e -> {
