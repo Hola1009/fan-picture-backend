@@ -227,8 +227,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     @Override
     public Page<PictureVO> voPageQuery(PicturePageQuery pageQuery) {
-        // 普通用户只能看到过审的内容
-        if (pageQuery.isNullSpaceId()) {
+        // 普通用户只能看到过审的内容 和 公共图库
+        if (pageQuery.getSpaceId() == null) {
+            pageQuery.setNullSpaceId(true);
             pageQuery.setReviewStatus(1);
         }
 
