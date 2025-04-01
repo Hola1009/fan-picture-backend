@@ -26,4 +26,6 @@ public interface SpaceService extends IService<Space> {
     Page<SpaceVO> pageQueryVO(SpacePageQuery pageQuery);
 
     Boolean edit(EditSpaceRequest request);
+
+    SpaceVO getDetailVOById(Long id);
 }

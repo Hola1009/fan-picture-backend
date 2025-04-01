@@ -142,6 +142,7 @@ public class SpaceAnalyzeServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
         Long userId = request.getUserId();
         wrapper.eq(Objects.nonNull(userId), "user_id", userId);
+        wrapper.eq(Objects.nonNull(request.getSpaceId()), "space_id", request.getSpaceId());
 
 
         String timeDimension = request.getTimeDimension();

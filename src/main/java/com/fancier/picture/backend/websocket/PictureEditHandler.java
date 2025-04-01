@@ -2,7 +2,7 @@ package com.fancier.picture.backend.websocket;
 
 import cn.hutool.json.JSONUtil;
 import com.fancier.picture.backend.config.JsonConfig;
-import com.fancier.picture.backend.model.user.vo.LoginUserVO;
+import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.websocket.disruptor.PictureEditEventProducer;
 import com.fancier.picture.backend.websocket.model.PictureEditActionEnum;
 import com.fancier.picture.backend.websocket.model.PictureEditMessageTypeEnum;
@@ -40,7 +40,7 @@ public class PictureEditHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(@NonNull WebSocketSession session) throws Exception {
         super.afterConnectionEstablished(session);
-        LoginUserVO user = (LoginUserVO) session.getAttributes().get("user");
+        UserVO user = (UserVO) session.getAttributes().get("user");
         Long pictureId = (Long) session.getAttributes().get("pictureId");
         pictureSessions.putIfAbsent(pictureId, ConcurrentHashMap.newKeySet());
         pictureSessions.get(pictureId).add(session);
@@ -59,7 +59,7 @@ public class PictureEditHandler extends TextWebSocketHandler {
     protected void handleTextMessage(@NonNull WebSocketSession session, @NonNull TextMessage message) throws Exception {
         super.handleTextMessage(session, message);
         PictureEditRequestMessage requestMessage = JSONUtil.toBean(message.getPayload(), PictureEditRequestMessage.class);
-        LoginUserVO user = (LoginUserVO) session.getAttributes().get("user");
+        UserVO user = (UserVO) session.getAttributes().get("user");
         Long pictureId = (Long) session.getAttributes().get("pictureId");
 
         pictureEditEventProducer.publishEvent(requestMessage, session, user, pictureId);
@@ -68,7 +68,7 @@ public class PictureEditHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(@NonNull WebSocketSession session, @NonNull CloseStatus status) throws Exception {
         super.afterConnectionClosed(session, status);
-        LoginUserVO user = (LoginUserVO) session.getAttributes().get("user");
+        UserVO user = (UserVO) session.getAttributes().get("user");
         Long pictureId = (Long) session.getAttributes().get("pictureId");
         Set<WebSocketSession> sessionSet = pictureSessions.get(pictureId);
 
@@ -90,7 +90,7 @@ public class PictureEditHandler extends TextWebSocketHandler {
     }
 
 
-    public void handleEnterEditMessage(LoginUserVO user, Long pictureId) throws IOException {
+    public void handleEnterEditMessage(UserVO user, Long pictureId) throws IOException {
         // 图片没有被用户编辑才进入编辑
         if (!pictureIdUserIdMap.containsKey(pictureId)) {
             pictureIdUserIdMap.put(pictureId, user.getId());
@@ -106,7 +106,7 @@ public class PictureEditHandler extends TextWebSocketHandler {
         }
     }
 
-    public void handleEditActionMessage(LoginUserVO user, Long pictureId, String editAction, WebSocketSession session) throws IOException {
+    public void handleEditActionMessage(UserVO user, Long pictureId, String editAction, WebSocketSession session) throws IOException {
         Long editingUserId = pictureIdUserIdMap.get(pictureId);
         PictureEditActionEnum actionEnum = PictureEditActionEnum.of(editAction);
         if (actionEnum == null) {
@@ -124,7 +124,7 @@ public class PictureEditHandler extends TextWebSocketHandler {
         }
     }
 
-    public void handleExitEditMessage(LoginUserVO user, Long pictureId) throws IOException {
+    public void handleExitEditMessage(UserVO user, Long pictureId) throws IOException {
         Long editingUserId = pictureIdUserIdMap.get(pictureId);
         if (editingUserId != null && Objects.equals(editingUserId, user.getId())) {
             pictureIdUserIdMap.remove(pictureId);

@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fancier.picture.backend.auth.constant.UserRole;
@@ -20,7 +21,6 @@ import com.fancier.picture.backend.model.picture.dto.*;
 import com.fancier.picture.backend.model.picture.vo.PictureTagCategory;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
 import com.fancier.picture.backend.model.space.Space;
-import com.fancier.picture.backend.model.user.vo.LoginUserVO;
 import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.service.PictureService;
 import com.fancier.picture.backend.thirdparty.aliyunai.AliYunAiApi;
@@ -42,6 +42,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.DigestUtils;
 
 import java.awt.*;
@@ -76,6 +77,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private final StringRedisTemplate stringRedisTemplate;
 
     private final AliYunAiApi aliYunAiApi;
+
+    private final TransactionTemplate transactionTemplate;
+
 
     private static final List<String> tagList;
     private static final List<String> categoryList;
@@ -134,16 +138,56 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         picture.setId(pictureId);
         picture.setUserId(userId);
 
-        saveOrUpdate(picture);
+
+        Long finalSpaceId = spaceId;
+        transactionTemplate.execute(status -> {
+            try {
+                fillReviewStatus(picture);
+                // 保存图片
+                saveOrUpdate(picture);
+                // 操作2
+                if (finalSpaceId != null) {
+                    UpdateWrapper<Space> updateWrapper = new UpdateWrapper<>();
+                    updateWrapper.setSql("total_count = total_count + 1")
+                            .setSql("total_size = total_size + " + picture.getPicSize())
+                            .eq("id", finalSpaceId);
+                    spaceMapper.update(updateWrapper);
+                }
+                return status;
+            } catch (BusinessException e) {
+                status.setRollbackOnly();
+                throw e;
+            }
+        });
+
 
         PictureVO pictureVO = new PictureVO();
         BeanUtils.copyProperties(picture, pictureVO);
-        fillReviewStatus(picture);
+
         return pictureVO;
     }
 
     @Override
     public Boolean delete(Long id) {
+        transactionTemplate.execute(status -> {
+            try {
+                removeById(id);
+                Picture picture = getById(id);
+                Long spaceId = picture.getSpaceId();
+                // 操作2
+                if (spaceId != null) {
+                    UpdateWrapper<Space> updateWrapper = new UpdateWrapper<>();
+                    updateWrapper.setSql("total_count = total_count - 1")
+                            .setSql("total_size = total_size - " + picture.getPicSize())
+                            .eq("id", spaceId);
+                    spaceMapper.update(updateWrapper);
+                }
+                return status;
+            } catch (BusinessException e) {
+                status.setRollbackOnly();
+                throw e;
+            }
+        });
         return removeById(id);
     }
 
@@ -161,9 +205,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     public PictureVO getVOById(Long id) {
         Picture picture = getById(id);
         ThrowUtils.throwIf(picture == null, ErrorCode.PARAM_ERROR, "图片不存在");
-
         PictureVO pictureVO = new PictureVO();
         BeanUtils.copyProperties(picture, pictureVO);
+
+        List<String> tags = JSONUtil.toList(picture.getTags(), String.class);
+        pictureVO.setTags(tags);
+
 
         Long userId = picture.getUserId();
         UserVO userVO = userService.getUserVO(userId);
@@ -181,7 +228,10 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     @Override
     public Page<PictureVO> voPageQuery(PicturePageQuery pageQuery) {
         // 普通用户只能看到过审的内容
-        pageQuery.setReviewStatus(1);
+        if (pageQuery.isNullSpaceId()) {
+            pageQuery.setReviewStatus(1);
+        }
+
         Page<Picture> picturePage = pictureMapper.pageQuery(pageQuery);
         List<Picture> records = picturePage.getRecords();
 
@@ -251,7 +301,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Picture picture = new Picture();
         BeanUtils.copyProperties(request, picture);
         picture.setReviewerId(userService.getLoginUser().getId());
-
+        picture.setReviewTime(LocalDateTime.now());
         return updateById(picture);
     }
 
@@ -260,11 +310,11 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         // 获取页面的图片标签
         String fetchUrl = String.format("https://cn.bing.com/images/async?q=%s&mmasync=1", request.getSearchText());
         Document document = Jsoup.connect(fetchUrl).get();
-        Element div = document.getElementsByClass("dg_b isvctrl").first();
+        Element div = document.getElementsByClass("dgControl").first();
         if (ObjUtil.isEmpty(div)) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "获取元素失败");
         }
-        Elements imgElements = Objects.requireNonNull(div).select("img.ming");
+        Elements imgElements = Objects.requireNonNull(div).select("img.mimg");
 
         if (StrUtil.isBlank(request.getNamePrefix())) {
             request.setNamePrefix(request.getSearchText());
@@ -376,7 +426,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     }
 
     private void fillReviewStatus(Picture picture) {
-        LoginUserVO loginUser = userService.getLoginUser();
+        UserVO loginUser = userService.getLoginUser();
         if (UserRole.ADMIN_ROLE.equals(loginUser.getUserRole())) {
             picture.setReviewerId(loginUser.getId());
             picture.setReviewMessage("自动过审");

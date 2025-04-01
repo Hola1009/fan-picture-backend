@@ -1,6 +1,6 @@
 package com.fancier.picture.backend.websocket.disruptor;
 
-import com.fancier.picture.backend.model.user.vo.LoginUserVO;
+import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.websocket.model.PictureEditRequestMessage;
 import com.lmax.disruptor.RingBuffer;
 import com.lmax.disruptor.dsl.Disruptor;
@@ -19,7 +19,7 @@ public class PictureEditEventProducer {
     @Resource
     private Disruptor<PictureEditEvent> pictureEditEventDisruptor;
 
-    public void publishEvent(PictureEditRequestMessage requestMessage, WebSocketSession session, LoginUserVO user, Long pictureId) {
+    public void publishEvent(PictureEditRequestMessage requestMessage, WebSocketSession session, UserVO user, Long pictureId) {
         RingBuffer<PictureEditEvent> ringBuffer = pictureEditEventDisruptor.getRingBuffer();
         // 获取到可以防止事件的位置
         long next = ringBuffer.next();

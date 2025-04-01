@@ -1,10 +1,12 @@
 package com.fancier.picture.backend.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fancier.picture.backend.auth.constant.SpaceUserRole;
+import com.fancier.picture.backend.auth.model.SpaceUserAuth;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
 import com.fancier.picture.backend.mapper.SpaceMapper;
@@ -160,6 +162,26 @@ public class SpaceServiceImpl extends ServiceImpl<SpaceMapper, Space>
 
         // 更新
         return updateById(space);
+    }
+
+    @Override
+    public SpaceVO getDetailVOById(Long id) {
+        Space space = getById(id);
+        SpaceVO spaceVO = new SpaceVO();
+        BeanUtils.copyProperties(space, spaceVO);
+
+        UserVO loginUser = userService.getLoginUser();
+        spaceVO.setUser(loginUser);
+
+        SpaceUser spaceUser = spaceUserMapper.selectOne(new LambdaQueryWrapper<SpaceUser>()
+                .eq(SpaceUser::getUserId, loginUser.getId())
+                .eq(SpaceUser::getSpaceId, space.getId()));
+
+        ThrowUtils.throwIf(spaceUser == null, ErrorCode.NO_AUTH_ERROR, "用户未加入该空间");
+
+        spaceVO.setPermissionList(SpaceUserAuth.getPermissionsByRole(spaceUser.getSpaceRole()));
+
+        return spaceVO;
     }
 
 

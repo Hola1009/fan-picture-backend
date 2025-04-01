@@ -3,7 +3,9 @@ package com.fancier.picture.backend.model.space.vo;
 import com.fancier.picture.backend.model.user.vo.UserVO;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @author <a href="https://github.com/hola1009">fancier</a>
@@ -74,4 +76,9 @@ public class SpaceVO {
      * 创建用户信息
      */
     private UserVO user;
+
+    /**
+     * 权限列表
+     */
+    private List<String> permissionList = new ArrayList<>();
 }

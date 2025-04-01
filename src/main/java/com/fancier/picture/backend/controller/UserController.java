@@ -12,7 +12,6 @@ import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
 import com.fancier.picture.backend.model.user.User;
 import com.fancier.picture.backend.model.user.dto.*;
-import com.fancier.picture.backend.model.user.vo.LoginUserVO;
 import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -43,13 +42,13 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public BaseResponse<LoginUserVO> login(@Validated @RequestBody UserLoginRequest request) {
+    public BaseResponse<UserVO> login(@Validated @RequestBody UserLoginRequest request) {
         return ResultUtils.success(userService.login(request));
     }
 
     @GetMapping("/get/login")
     public BaseResponse<?> getLoginUser() {
-        LoginUserVO loginUser = userService.getLoginUser();
+        UserVO loginUser = userService.getLoginUser();
         return ResultUtils.success(loginUser);
     }
     @PostMapping("/logout")

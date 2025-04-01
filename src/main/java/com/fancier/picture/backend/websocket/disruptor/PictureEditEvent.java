@@ -1,6 +1,6 @@
 package com.fancier.picture.backend.websocket.disruptor;
 
-import com.fancier.picture.backend.model.user.vo.LoginUserVO;
+import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.websocket.model.PictureEditRequestMessage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -22,7 +22,7 @@ public class PictureEditEvent {
     /**
      * 当前用户
      */
-    private LoginUserVO user;
+    private UserVO user;
 
     private Long pictureId;
 

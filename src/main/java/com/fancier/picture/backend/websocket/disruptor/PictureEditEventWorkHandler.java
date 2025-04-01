@@ -1,7 +1,7 @@
 package com.fancier.picture.backend.websocket.disruptor;
 
 import cn.hutool.json.JSONUtil;
-import com.fancier.picture.backend.model.user.vo.LoginUserVO;
+import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.websocket.PictureEditHandler;
 import com.fancier.picture.backend.websocket.model.PictureEditMessageTypeEnum;
 import com.fancier.picture.backend.websocket.model.PictureEditRequestMessage;
@@ -26,7 +26,7 @@ public class PictureEditEventWorkHandler implements WorkHandler<PictureEditEvent
         String editAction = requestMessage.getEditAction();
         PictureEditMessageTypeEnum pictureEditMessageTypeEnum = PictureEditMessageTypeEnum.of(editAction);
 
-        LoginUserVO user = event.getUser();
+        UserVO user = event.getUser();
         Long pictureId = event.getPictureId();
         WebSocketSession session = event.getSession();
 

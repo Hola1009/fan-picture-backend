@@ -14,7 +14,7 @@ public class UploadPictureByUrlService extends UploadPictureServiceTemplate {
     @Override
     protected String getOriginalFileName(Object inputSource) {
         String url = (String) inputSource;
-        return FileUtil.mainName(url).substring(0, 50) + FileUtil.getSuffix(url);
+        return FileUtil.mainName(url) + FileUtil.getSuffix(url);
     }
 
     @Override

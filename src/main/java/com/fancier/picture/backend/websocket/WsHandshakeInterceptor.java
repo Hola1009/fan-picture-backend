@@ -7,7 +7,7 @@ import com.fancier.picture.backend.auth.model.SpaceUserAuth;
 import com.fancier.picture.backend.model.picture.Picture;
 import com.fancier.picture.backend.model.space.Space;
 import com.fancier.picture.backend.model.space.constant.SpaceTypeEnum;
-import com.fancier.picture.backend.model.user.vo.LoginUserVO;
+import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.service.PictureService;
 import com.fancier.picture.backend.service.SpaceService;
 import com.fancier.picture.backend.service.SpaceUserService;
@@ -52,7 +52,7 @@ public class WsHandshakeInterceptor implements HandshakeInterceptor {
                 return false;
             }
 
-            LoginUserVO loginUser = userService.getLoginUser();
+            UserVO loginUser = userService.getLoginUser();
             if (ObjectUtil.isEmpty(loginUser)) {
                 return false;
             }
@@ -63,7 +63,7 @@ public class WsHandshakeInterceptor implements HandshakeInterceptor {
             }
 
             Long spaceId = picture.getSpaceId();
-            Space space = null;
+            Space space;
             if (spaceId != null) {
                 space = spaceService.getById(spaceId);
                 if (!Objects.equals(space.getSpaceType(), SpaceTypeEnum.TEAM.getValue())) {

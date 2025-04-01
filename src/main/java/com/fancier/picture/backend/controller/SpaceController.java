@@ -18,9 +18,7 @@ import com.fancier.picture.backend.model.space.dto.SpacePageQuery;
 import com.fancier.picture.backend.model.space.dto.UpdateSpaceRequest;
 import com.fancier.picture.backend.model.space.vo.SpaceLevel;
 import com.fancier.picture.backend.model.space.vo.SpaceVO;
-import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.service.SpaceService;
-import com.fancier.picture.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.validation.annotation.Validated;
@@ -40,8 +38,6 @@ import java.util.stream.Collectors;
 public class SpaceController {
 
     private final SpaceService spaceService;
-
-    private final UserService userService;
 
     @PostMapping("/add")
     @SaCheckLogin(type = KitType.USER)
@@ -63,24 +59,14 @@ public class SpaceController {
 
     @GetMapping("/get")
     @SaCheckRole(type = KitType.USER, value = UserRole.ADMIN_ROLE)
-    public BaseResponse<Space> getById(@NotNull Long id) {
+    public BaseResponse<Space> getDetailById(@NotNull Long id) {
         return ResultUtils.success(spaceService.getById(id));
     }
 
     @GetMapping("/get/vo")
     @SaCheckPermission(type = KitType.SPACE, value = SpacePermission.PICTURE_VIEW)
-    public BaseResponse<SpaceVO> getVOById(@NotNull Long id) {
-        Space space = spaceService.getById(id);
-
-        // 转 vo
-        SpaceVO spaceVO = new SpaceVO();
-        BeanUtils.copyProperties(space, spaceVO);
-
-        // 填充创建用户信息
-        UserVO userVO = userService.getUserVO(space.getUserId());
-        spaceVO.setUser(userVO);
-
-        return ResultUtils.success(spaceVO);
+    public BaseResponse<SpaceVO> getDetailVoById(@NotNull Long id) {
+        return ResultUtils.success(spaceService.getDetailVOById(id));
     }
 
     @PostMapping("/list/page")

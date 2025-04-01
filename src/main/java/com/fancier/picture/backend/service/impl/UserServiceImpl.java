@@ -4,13 +4,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.fancier.picture.backend.auth.constant.StpKit;
-import com.fancier.picture.backend.auth.constant.UserRole;
 import com.fancier.picture.backend.common.exception.ErrorCode;
 import com.fancier.picture.backend.common.exception.ThrowUtils;
 import com.fancier.picture.backend.mapper.UserMapper;
 import com.fancier.picture.backend.model.user.User;
 import com.fancier.picture.backend.model.user.dto.*;
-import com.fancier.picture.backend.model.user.vo.LoginUserVO;
 import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -61,7 +59,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public LoginUserVO login(UserLoginRequest request) {
+    public UserVO login(UserLoginRequest request) {
         String userAccount = request.getUserAccount();
         // 校验账号是否存在
         User one = getOne(new LambdaQueryWrapper<User>()
@@ -74,7 +72,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         ThrowUtils.throwIf(!one.getUserPassword().equals(encode), ErrorCode.PARAM_ERROR, "密码错误");
 
         // 登录
-        LoginUserVO loginUserVO = new LoginUserVO();
+        UserVO loginUserVO = new UserVO();
         BeanUtils.copyProperties(one, loginUserVO);
 
         StpKit.USER.login(loginUserVO);
@@ -130,10 +128,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     }
 
     @Override
-    public LoginUserVO getLoginUser() {
-        LoginUserVO loginUserVO = (LoginUserVO) StpKit.USER.getSession().getLoginId();
+    public UserVO getLoginUser() {
+        UserVO loginUserVO = (UserVO) StpKit.USER.getSession().getLoginId();
         // 防止未登录造成的空指针异常
-        return Optional.of(loginUserVO).orElseGet(LoginUserVO::new);
+        return Optional.of(loginUserVO).orElseGet(UserVO::new);
     }
 
     @Override
@@ -156,12 +154,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         UserVO userVO = new UserVO();
         BeanUtils.copyProperties(byId, userVO);
         return userVO;
-    }
-
-    @Override
-    public Boolean isAdmin() {
-        LoginUserVO loginUser = getLoginUser();
-        return UserRole.ADMIN_ROLE.equals(loginUser.getUserRole());
     }
 
     @Override

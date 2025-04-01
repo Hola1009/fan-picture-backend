@@ -1,7 +1,7 @@
 package com.fancier.picture.backend.websocket.model;
 
 
-import com.fancier.picture.backend.model.user.vo.LoginUserVO;
+import com.fancier.picture.backend.model.user.vo.UserVO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -32,5 +32,5 @@ public class PictureEditResponseMessage {
     /**
      * 用户信息
      */
-    private LoginUserVO user;
+    private UserVO user;
 }

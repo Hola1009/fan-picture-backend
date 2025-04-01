@@ -1,10 +1,9 @@
 package com.fancier.picture.backend.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.fancier.picture.backend.model.user.User;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.fancier.picture.backend.model.user.User;
 import com.fancier.picture.backend.model.user.dto.*;
-import com.fancier.picture.backend.model.user.vo.LoginUserVO;
 import com.fancier.picture.backend.model.user.vo.UserVO;
 
 import java.util.List;
@@ -20,12 +19,10 @@ public interface UserService extends IService<User> {
 
     UserVO getUserVO(Long id);
 
-    Boolean isAdmin();
-
     String encode(String password);
 
 
-    LoginUserVO login(UserLoginRequest request);
+    UserVO login(UserLoginRequest request);
 
     Long addUser(AddUserRequest request);
 
@@ -33,7 +30,7 @@ public interface UserService extends IService<User> {
 
     Page<UserVO> getUsers(UserPageQuery pageQuery);
 
-    LoginUserVO getLoginUser();
+    UserVO getLoginUser();
 
     List<UserVO> listVOByIds(List<Long> userIds);
 }

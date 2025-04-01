@@ -1,5 +1,6 @@
 package com.fancier.picture.backend.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -16,13 +17,14 @@ import com.fancier.picture.backend.model.spaceUser.dto.SpaceUserEditRequest;
 import com.fancier.picture.backend.model.spaceUser.dto.SpaceUserQueryRequest;
 import com.fancier.picture.backend.model.spaceUser.vo.SpaceUserVO;
 import com.fancier.picture.backend.model.user.User;
-import com.fancier.picture.backend.model.user.vo.LoginUserVO;
+import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.service.SpaceUserService;
 import com.fancier.picture.backend.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -52,7 +54,7 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
                 .eq(SpaceUser::getUserId, userId)
                 .eq(SpaceUser::getSpaceId, spaceId);
 
-        SpaceUser one = this.getOne(eq);
+        SpaceUser one = this.getOne(eq.getWrapper());
 
         return one.getSpaceRole();
     }
@@ -107,7 +109,7 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
 
     @Override
     public List<SpaceUserVO> getMy() {
-        LoginUserVO loginUser = userService.getLoginUser();
+        UserVO loginUser = userService.getLoginUser();
         SpaceUserQueryRequest spaceUserQueryRequest = new SpaceUserQueryRequest();
         spaceUserQueryRequest.setUserId(loginUser.getId());
         List<SpaceUser> spaceUserList = list(
@@ -116,7 +118,7 @@ public class SpaceUserServiceImpl extends ServiceImpl<SpaceUserMapper, SpaceUser
 
         List<Long> spaceIdList = spaceUserList.stream().map(SpaceUser::getSpaceId).collect(Collectors.toList());
 
-
+        if (CollUtil.isEmpty(spaceIdList)) return Collections.emptyList();
         Map<Long, Space> idSpaceMap = spaceMapper.selectByIds(spaceIdList).stream()
                 .collect(Collectors.toMap(Space::getId, Function.identity()));
 

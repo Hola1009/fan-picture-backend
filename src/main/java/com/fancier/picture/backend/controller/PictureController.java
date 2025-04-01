@@ -80,6 +80,7 @@ public class PictureController {
     }
 
     @GetMapping("/get/vo")
+    @SaCheckPermission(type = KitType.SPACE, value = SpacePermission.PICTURE_VIEW)
     public BaseResponse<PictureVO> getVO(@NotNull Long id) {
         return ResultUtils.success(pictureService.getVOById(id));
     }
