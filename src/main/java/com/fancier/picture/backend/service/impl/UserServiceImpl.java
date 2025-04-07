@@ -1,5 +1,6 @@
 package com.fancier.picture.backend.service.impl;
 
+import cn.hutool.core.util.RandomUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -11,15 +12,19 @@ import com.fancier.picture.backend.model.user.User;
 import com.fancier.picture.backend.model.user.dto.*;
 import com.fancier.picture.backend.model.user.vo.UserVO;
 import com.fancier.picture.backend.service.UserService;
+import com.fancier.picture.backend.thirdparty.javaMail.MailManager;
+import com.fancier.picture.backend.util.FileParserUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +38,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     implements UserService {
 
     private final UserMapper userMapper;
+
+    private final StringRedisTemplate stringRedisTemplate;
+
+    private final MailManager mailManager;
+
+    private static final String MAIL_HTML_TEMPLATE;
+    private static final String VALIDATION_CODE_KEY_PREFIX = "user:validationCode:";
+
+    static {
+        MAIL_HTML_TEMPLATE = FileParserUtil.parseStringFromResource("biz/mailTemplate.txt");
+    }
 
     @Value("${user.login.salt}")
     private String salt;
@@ -75,8 +91,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         UserVO loginUserVO = new UserVO();
         BeanUtils.copyProperties(one, loginUserVO);
 
-        StpKit.USER.login(loginUserVO);
-        StpKit.SPACE.login(loginUserVO);
+        StpKit.USER.login(loginUserVO.getId());
+        StpKit.USER.getSession().set("loginUser", loginUserVO);
+        StpKit.SPACE.login(loginUserVO.getId());
+
         return loginUserVO;
     }
 
@@ -129,7 +147,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
 
     @Override
     public UserVO getLoginUser() {
-        UserVO loginUserVO = (UserVO) StpKit.USER.getSession().getLoginId();
+        UserVO loginUserVO = (UserVO) StpKit.USER.getSession().get("loginUser");
         // 防止未登录造成的空指针异常
         return Optional.of(loginUserVO).orElseGet(UserVO::new);
     }
@@ -146,6 +164,50 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             BeanUtils.copyProperties(u, userVO);
             return userVO;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public Boolean editUser(UserEditRequest request) {
+        User user = new User();
+        BeanUtils.copyProperties(request, user);
+
+        Long userId = getLoginUser().getId();
+        user.setId(userId);
+
+        User byId = getById(userId);
+        UserVO loginUser = new UserVO();
+        BeanUtils.copyProperties(byId, loginUser);
+
+        StpKit.USER.getSession().set("loginUser", loginUser);
+
+        return this.updateById(user);
+    }
+
+    @Override
+    public Boolean sendValidationCode(SendValidationCodeRequest request) {
+        String mainAddress = request.getMailAddress();
+
+        String key = VALIDATION_CODE_KEY_PREFIX + mainAddress;
+
+        ThrowUtils.throwIf(Boolean.TRUE.equals(stringRedisTemplate.hasKey(key)),
+                ErrorCode.PARAM_ERROR, "验证码已发送, 请勿频繁操作");
+
+        try {
+            String verificationCode = RandomUtil.randomNumbers(6);
+
+            stringRedisTemplate.opsForValue().set(key, verificationCode,
+                    5, TimeUnit.MINUTES);
+
+
+            String message = String.format(MAIL_HTML_TEMPLATE, verificationCode);
+
+            mailManager.sendMail(mainAddress, "Fancy-Picture", message);
+        } catch (Exception e) {
+            stringRedisTemplate.delete(key);
+            throw new RuntimeException(e);
+        }
+
+        return true;
     }
 
     @Override

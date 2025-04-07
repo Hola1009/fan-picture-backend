@@ -18,6 +18,19 @@ spring:
     port: 6379
     timeout: 5000
     password: fancier123
+  mail:
+    host: smtp.163.com
+    username: fancier_fox@163.com  # 完整邮箱地址
+    protocol: smtp
+    port: 465                     # 必须使用465或587
+    properties:
+      mail:
+        smtp:
+          auth: true
+          ssl:
+            enable: true           # 465端口必须启用SSL
+          starttls:
+            enable: false          # 465端口要关闭STARTTLS
 
 mybatis-plus:
   configuration:

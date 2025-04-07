@@ -33,4 +33,8 @@ public interface UserService extends IService<User> {
     UserVO getLoginUser();
 
     List<UserVO> listVOByIds(List<Long> userIds);
+
+    Boolean editUser(UserEditRequest request);
+
+    Boolean sendValidationCode(SendValidationCodeRequest request);
 }

@@ -1,5 +1,6 @@
 package com.fancier.picture.backend.thirdparty.tencentCOS;
 
+import cn.hutool.core.util.StrUtil;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
@@ -59,5 +60,15 @@ public class CosManager {
         rule2.setRule(String.format("imageMogr2/thumbnail/%sx%s>", 256, 256));
         ruleList.add(rule2);
         return ruleList;
+    }
+
+    /**
+     * 删除图片
+     * @param picUrl 图片 url
+     */
+    public void deletePicture(String picUrl) {
+        String prefix = tencentCOSConfigure.getHost() + "/";
+        String key = StrUtil.removePrefix(picUrl, prefix);
+        cosClient.deleteObject(tencentCOSConfigure.getBucket(), key);
     }
 }

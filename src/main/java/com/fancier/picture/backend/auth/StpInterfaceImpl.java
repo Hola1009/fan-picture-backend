@@ -63,7 +63,7 @@ public class StpInterfaceImpl implements StpInterface {
     }
 
     private List<String> getUserRoleList() {
-        UserVO loginUserVO = (UserVO) StpKit.USER.getSession().getLoginId();
+        UserVO loginUserVO = (UserVO) StpKit.USER.getSession().get("loginUser");
         String userRole = loginUserVO.getUserRole();
         return Collections.singletonList(userRole);
     }
@@ -101,7 +101,7 @@ public class StpInterfaceImpl implements StpInterface {
      */
     List<String> handlePicturePath(SpaceAuthContext spaceAuthContext) {
         // 没获取到就返回一个字段全为空的对象防止空指针异常
-        UserVO loginUser = (UserVO) StpKit.SPACE.getSession().getLoginId();
+        UserVO loginUser = (UserVO) StpKit.USER.getSession().get("loginUser");
 
         Long userId = loginUser.getId();
         Long pictureId = spaceAuthContext.getId();
@@ -153,7 +153,7 @@ public class StpInterfaceImpl implements StpInterface {
      * 都只需要拿到空间 id 就可以了
      */
     List<String> handleSpacePath(SpaceAuthContext spaceAuthContext) {
-        UserVO loginUser = (UserVO) StpKit.SPACE.getSession().getLoginId();
+        UserVO loginUser = (UserVO) StpKit.USER.getSession().get("loginUser");
         Long userId = loginUser.getId();
         // 系统如果是管理员的话
         if(UserRole.ADMIN_ROLE.equals(loginUser.getUserRole())) {
@@ -178,7 +178,7 @@ public class StpInterfaceImpl implements StpInterface {
      * <ol>4. 编辑用户 会传 spaceUserId</ol>
      */
     List<String> handleSpaceUserPath(SpaceAuthContext spaceAuthContext) {
-        UserVO loginUser = (UserVO) StpKit.SPACE.getSession().getLoginId();
+        UserVO loginUser = (UserVO) StpKit.USER.getSession().get("loginUser");
         Long userId = loginUser.getId();
 
         if(UserRole.ADMIN_ROLE.equals(loginUser.getUserRole())) {

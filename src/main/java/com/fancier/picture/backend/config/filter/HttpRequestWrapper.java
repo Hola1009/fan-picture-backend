@@ -22,7 +22,7 @@ public class HttpRequestWrapper extends HttpServletRequestWrapper {
     /**
      * Constructs a request object wrapping the given request.
      *
-     * @param request The request to wrap
+     * @param request The request mailAddress wrap
      * @throws IllegalArgumentException if the request is null
      */
     public HttpRequestWrapper(HttpServletRequest request) throws IOException {

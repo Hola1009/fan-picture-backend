@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>您的验证码</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background-color: #1890ff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .content {
+            padding: 30px;
+            line-height: 1.6;
+        }
+        .code-container {
+            margin: 25px 0;
+            text-align: center;
+        }
+        .verification-code {
+            display: inline-block;
+            padding: 15px 30px;
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: #1890ff;
+            background-color: #f0f7ff;
+            border-radius: 6px;
+            border: 1px dashed #1890ff;
+        }
+        .footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            background-color: #f9f9f9;
+        }
+        .note {
+            color: #666;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #1890ff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>您的验证码</h1>
+        </div>
+        <div class="content">
+            <p>尊敬的用户，您好！</p>
+            <p>您正在完成注册操作，请使用以下验证码完成验证：</p>
+
+            <div class="code-container">
+                <div class="verification-code">%s</div>
+            </div>
+
+            <p class="note">
+                此验证码将在 <strong>5分钟</strong> 后失效。<br>
+                如非本人操作，请忽略此邮件或联系客服。
+            </p>
+
+            <p>感谢您使用我们的服务！</p>
+
+            <p>Fancy-Picture 团队</p>
+        </div>
+    </div>
+</body>
+</html>

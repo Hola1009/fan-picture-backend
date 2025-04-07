@@ -1,6 +1,6 @@
 package com.fancier.picture.backend.auth.model;
 
-import com.fancier.picture.backend.util.JsonFileParserUtil;
+import com.fancier.picture.backend.util.FileParserUtil;
 
 import java.util.List;
 import java.util.Map;
@@ -13,7 +13,7 @@ public class SpaceUserAuth {
     public static final Map<String , List<String>> spaceRolePermissionsMap;
 
     static {
-        List<SpaceRole> spaceRoles = JsonFileParserUtil.parse2ListFormResource(SpaceRole.class, "biz/spaceUserRoles.json");
+        List<SpaceRole> spaceRoles = FileParserUtil.parseJsonFile2ListFormResource(SpaceRole.class, "biz/spaceUserRoles.json");
         spaceRolePermissionsMap = spaceRoles.stream().collect(Collectors.toMap(SpaceRole::getKey, SpaceRole::getPermissions));
     }
 

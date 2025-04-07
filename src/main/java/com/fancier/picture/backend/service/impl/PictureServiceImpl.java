@@ -1,7 +1,6 @@
 package com.fancier.picture.backend.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -27,11 +26,12 @@ import com.fancier.picture.backend.thirdparty.aliyunai.AliYunAiApi;
 import com.fancier.picture.backend.thirdparty.aliyunai.model.CreateOutPaintingTaskResponse;
 import com.fancier.picture.backend.thirdparty.imageSearch.ImageSearchApiFacade;
 import com.fancier.picture.backend.thirdparty.imageSearch.model.ImageSearchResult;
+import com.fancier.picture.backend.thirdparty.tencentCOS.CosManager;
 import com.fancier.picture.backend.thirdparty.tencentCOS.UploadPictureByFileService;
 import com.fancier.picture.backend.thirdparty.tencentCOS.UploadPictureByUrlService;
 import com.fancier.picture.backend.thirdparty.tencentCOS.model.UploadPictureResult;
 import com.fancier.picture.backend.util.ColorSimilarUtils;
-import com.fancier.picture.backend.util.JsonFileParserUtil;
+import com.fancier.picture.backend.util.FileParserUtil;
 import lombok.RequiredArgsConstructor;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -80,6 +80,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     private final TransactionTemplate transactionTemplate;
 
+    private final CosManager cosManager;
+
 
     private static final List<String> tagList;
     private static final List<String> categoryList;
@@ -87,8 +89,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private static final String PAGE_QUERY_PREFIX = "fanPicture:voPageQueryByCache:";
 
     static {
-        tagList = JsonFileParserUtil.parse2ListFormResource(String.class, "biz/tagList.json");
-        categoryList = JsonFileParserUtil.parse2ListFormResource(String.class, "biz/categoryList.json");
+        tagList = FileParserUtil.parseJsonFile2ListFormResource(String.class, "biz/tagList.json");
+        categoryList = FileParserUtil.parseJsonFile2ListFormResource(String.class, "biz/categoryList.json");
     }
 
     /**
@@ -98,6 +100,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
      *  3. 根据更新图片 url
      * 如果是更新的话优先更新
      * 然后再判断是公共服务还是
+     * 1001 这个 spaceId 并不存在, 图片关联它只是标识这是一张用户头像
      */
     @Override
     public PictureVO uploadPicture(Object inputSource, UploadPictureRequest request) {
@@ -114,7 +117,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             // 如果 pictureId 存在，则说明是更新操做
             // 这一步是预见了管理员操作其他用户图片
             userId = oldPicture.getUserId();
-        } else if (spaceId != null) { // 上传图片到指定空间, 需要保证空间存在
+        } else if (spaceId != null && spaceId != 1001) { // 上传图片到指定空间, 需要保证空间存在
             LambdaQueryWrapper<Space> wrapper = new LambdaQueryWrapper<Space>().select(Space::getId)
                     .eq(Space::getId, spaceId);
             Space space = spaceMapper.selectOne(wrapper);
@@ -122,7 +125,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
 
         // 上传图片, 区分公共图库和其他图库
-        String uploadPathPrefix = spaceId == null ? "public" : "space/" + spaceId;
+        String uploadPathPrefix = spaceId == null || spaceId == 1001 ? "public" : "space/" + spaceId;
         UploadPictureResult uploadPictureResult;
         if (inputSource instanceof String) {
             uploadPictureResult = uploadPictureByUrlService.uploadFile(inputSource, uploadPathPrefix);
@@ -134,6 +137,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         BeanUtils.copyProperties(uploadPictureResult, picture);
 
         // 通用更新操作和插入操作, 不用写那么多 if 了
+        if (request.getPicName() != null) {
+            picture.setPicName(request.getPicName());
+        }
         picture.setSpaceId(spaceId);
         picture.setId(pictureId);
         picture.setUserId(userId);
@@ -146,7 +152,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                 // 保存图片
                 saveOrUpdate(picture);
                 // 操作2
-                if (finalSpaceId != null) {
+                if (finalSpaceId != null && finalSpaceId != 1001) {
                     UpdateWrapper<Space> updateWrapper = new UpdateWrapper<>();
                     updateWrapper.setSql("total_count = total_count + 1")
                             .setSql("total_size = total_size + " + picture.getPicSize())
@@ -171,9 +177,11 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     public Boolean delete(Long id) {
         transactionTemplate.execute(status -> {
             try {
-                removeById(id);
+
                 Picture picture = getById(id);
+                ThrowUtils.throwIf(picture == null, ErrorCode.PARAM_ERROR, "图片不存在");
                 Long spaceId = picture.getSpaceId();
+                removeById(id);
                 // 操作2
                 if (spaceId != null) {
                     UpdateWrapper<Space> updateWrapper = new UpdateWrapper<>();
@@ -182,6 +190,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
                             .eq("id", spaceId);
                     spaceMapper.update(updateWrapper);
                 }
+                cosManager.deletePicture(picture.getUrl());
                 return status;
             } catch (BusinessException e) {
                 status.setRollbackOnly();
@@ -337,8 +346,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
             UploadPictureRequest uploadPictureRequest = new UploadPictureRequest();
             uploadPictureRequest.setFileUrl(url);
 
-            String mainName = FileUtil.mainName(url);
-            uploadPictureRequest.setPicName(mainName + "-" + count);
+            uploadPictureRequest.setPicName(request.getNamePrefix() + "-" + count);
 
             uploadPicture(url, uploadPictureRequest);
 

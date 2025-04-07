@@ -1,5 +1,6 @@
 package com.fancier.picture.backend.controller;
 
+import cn.dev33.satoken.annotation.SaCheckLogin;
 import cn.dev33.satoken.annotation.SaCheckRole;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fancier.picture.backend.auth.constant.KitType;
@@ -93,10 +94,22 @@ public class UserController {
         return ResultUtils.success(userService.updateUser(request));
     }
 
+    @PostMapping("/edit")
+    @SaCheckLogin(type = KitType.USER)
+    public BaseResponse<Boolean> updateUser(@Validated @RequestBody UserEditRequest request) {
+
+        return ResultUtils.success(userService.editUser(request));
+    }
+
     @PostMapping("/list/page/vo")
     @SaCheckRole(type = KitType.USER, value = UserRole.ADMIN_ROLE)
     public BaseResponse<Page<UserVO>> getUsers(@Validated @RequestBody UserPageQuery pageQuery) {
         return ResultUtils.success(userService.getUsers(pageQuery));
+    }
+
+    @PostMapping("/sendValidationCode")
+    public BaseResponse<Boolean> sendValidationCode(@Validated @RequestBody SendValidationCodeRequest request) {
+        return ResultUtils.success(userService.sendValidationCode(request));
     }
 
 }
