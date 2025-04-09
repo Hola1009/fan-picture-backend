@@ -154,4 +154,10 @@ public class PictureController {
         return ResultUtils.success(aliYunAiApi.queryOutPaintingTaskResponse(taskId));
     }
 
+    @PostMapping("/like")
+    public BaseResponse<?> pictureLike(@RequestBody @Validated PictureLikeRequest request) {
+        pictureService.pictureLike(request);
+        return ResultUtils.success(true);
+    }
+
 }

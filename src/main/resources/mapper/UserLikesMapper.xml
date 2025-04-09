@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.fancier.picture.backend.mapper.UserLikesMapper">
+
+    <resultMap id="BaseResultMap" type="com.fancier.picture.backend.model.picture.UserLikes">
+            <id property="id" column="id" jdbcType="BIGINT"/>
+            <result property="userId" column="user_id" jdbcType="BIGINT"/>
+            <result property="pictureId" column="picture_id" jdbcType="BIGINT"/>
+            <result property="createdTime" column="created_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <insert id="insertIgnoreBatch" parameterType="java.util.List">
+        INSERT IGNORE INTO user_likes (user_id, picture_id)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userId}, #{item.pictureId})
+        </foreach>
+    </insert>
+</mapper>

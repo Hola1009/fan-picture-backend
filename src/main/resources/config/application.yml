@@ -53,6 +53,10 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.fancier.picture.backend.controller
+  basic:
+    enable: true
+    username: root
+    password: 128ve98a
 
 user:
   login:

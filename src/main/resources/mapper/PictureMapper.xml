@@ -28,6 +28,7 @@
             <result property="thumbnailUrl" column="thumbnail_url" jdbcType="VARCHAR"/>
             <result property="spaceId" column="space_id" jdbcType="BIGINT"/>
             <result property="picColor" column="pic_color" jdbcType="VARCHAR"/>
+            <result property="likesCount" column="likes_count" jdbcType="VARCHAR"/>
     </resultMap>
 
 </mapper>

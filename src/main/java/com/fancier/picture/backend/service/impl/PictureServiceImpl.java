@@ -17,6 +17,7 @@ import com.fancier.picture.backend.mapper.SpaceMapper;
 import com.fancier.picture.backend.model.picture.Picture;
 import com.fancier.picture.backend.model.picture.constant.ReviewType;
 import com.fancier.picture.backend.model.picture.dto.*;
+import com.fancier.picture.backend.model.picture.vo.LikeInfoVO;
 import com.fancier.picture.backend.model.picture.vo.PictureTagCategory;
 import com.fancier.picture.backend.model.picture.vo.PictureVO;
 import com.fancier.picture.backend.model.space.Space;
@@ -33,11 +34,13 @@ import com.fancier.picture.backend.thirdparty.tencentCOS.model.UploadPictureResu
 import com.fancier.picture.backend.util.ColorSimilarUtils;
 import com.fancier.picture.backend.util.FileParserUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Service;
@@ -48,11 +51,10 @@ import org.springframework.util.DigestUtils;
 import java.awt.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
 * @author Fanfan
@@ -60,6 +62,7 @@ import java.util.stream.Collectors;
 * @createDate 2025-03-17 12:54:14
 */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     implements PictureService{
@@ -86,7 +89,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private static final List<String> tagList;
     private static final List<String> categoryList;
 
-    private static final String PAGE_QUERY_PREFIX = "fanPicture:voPageQueryByCache:";
+    private static final String PAGE_QUERY_PREFIX = "fan_picture:picture:vo_page_query_by_cache:";
+
+    private static final String PICTURE_LIKE_PREFIX = "fan_picture:picture:picture_likes:";
+
+    private static final String PICTURE_LIKE_COUNT_PREFIX = "fan_picture:picture:picture_like_count:";
+    private static final String PICTURE_LIKE_TIME_PREFIX = "fan_picture:picture:picture_like_time:";
 
     static {
         tagList = FileParserUtil.parseJsonFile2ListFormResource(String.class, "biz/tagList.json");
@@ -246,17 +254,65 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         List<Picture> records = picturePage.getRecords();
 
         // do 转 vo
-        List<PictureVO> vos = records.stream().map(p -> {
+
+        Page<PictureVO> res = new Page<>(picturePage.getCurrent(), picturePage.getSize(), picturePage.getTotal());
+
+        Long userId = userService.getLoginUser().getId();
+        // 1. 使用正确的 Pipeline 操作收集结果
+        List<Long> pictureIds = records.stream().map(Picture::getId).collect(Collectors.toList());
+
+        // 2. 批量获取点赞状态（正确版）
+        List<LikeInfoVO> likeStatus = batchCheckLikeStatus(userId, pictureIds);
+
+        List<PictureVO> vos = IntStream.range(0, records.size()).mapToObj(i -> {
             PictureVO pictureVO = new PictureVO();
-            BeanUtils.copyProperties(p, pictureVO);
+            BeanUtils.copyProperties(records.get(i), pictureVO);
+            pictureVO.setLike(likeStatus.get(i).getIsLike());
+            pictureVO.setLikesCount(likeStatus.get(i).getLikesCount());
             return pictureVO;
         }).collect(Collectors.toList());
 
-        Page<PictureVO> res = new Page<>(picturePage.getCurrent(), picturePage.getSize(), picturePage.getTotal());
 
         res.setRecords(vos);
 
         return res;
+    }
+
+
+    public List<LikeInfoVO> batchCheckLikeStatus(Long userId, List<Long> pictureIds) {
+        // 1. 使用Pipeline同时查询两种数据
+        List<Object> results = stringRedisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+            // 查询用户点赞状态
+            for (Long picId : pictureIds) {
+                connection.sIsMember(
+                        (PICTURE_LIKE_PREFIX + picId).getBytes(),
+                        userId.toString().getBytes()
+                );
+            }
+
+            // 查询点赞总数
+            // 未匹配的项会返回空
+            for (Long picId : pictureIds) {
+                connection.get(
+                        (PICTURE_LIKE_COUNT_PREFIX + picId).getBytes()
+                );
+            }
+            return null;
+        });
+
+        // 2. 处理混合结果
+        List<LikeInfoVO> resultMap = new ArrayList<>();
+        int halfSize = results.size() / 2;
+
+        for (int i = 0; i < halfSize; i++) {
+            Boolean isLiked = (Boolean) results.get(i);
+            Integer likeCount = results.get(i + halfSize) != null ?
+                    Integer.parseInt((String) results.get(i + halfSize)) : 0;
+
+            resultMap.add(new LikeInfoVO(isLiked, likeCount));
+        }
+
+        return resultMap;
     }
 
     @Override
@@ -420,6 +476,65 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         ThrowUtils.throwIf(byId == null, ErrorCode.PARAM_ERROR, "需要修改的图片不存在");
 
         return aliYunAiApi.createOutPaintingTask(byId.getUrl(), request.getParameters());
+    }
+
+    /**
+     * 点赞服务
+     */
+    @Override
+    public void pictureLike(PictureLikeRequest request) {
+        Long userId = userService.getLoginUser().getId();
+        String key = PICTURE_LIKE_PREFIX + request.getPictureId();
+        String userIdStr = userId.toString();
+        String likeCountKey = PICTURE_LIKE_COUNT_PREFIX + request.getPictureId();
+        String likeTimeKey = PICTURE_LIKE_TIME_PREFIX + request.getPictureId();
+
+        // 查询用户是否已经点赞
+        boolean isLiked = Boolean.TRUE.equals(
+                stringRedisTemplate.opsForSet().isMember(key, userId.toString())
+        );
+
+        // Redis 原子操作
+        stringRedisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+            connection.multi(); // 开启事务
+            if (!isLiked) {
+                // 记录用户点赞关系
+                connection.sAdd(key.getBytes(), userIdStr.getBytes());
+                // 记录用户点赞时间
+                connection.zAdd(likeTimeKey.getBytes(), System.currentTimeMillis() / 1000.0, userIdStr.getBytes());
+                // 增加点赞计数
+                connection.incr(likeCountKey.getBytes());
+            } else {
+                // 移除用户点赞关系
+                connection.sRem(key.getBytes(), userIdStr.getBytes());
+                // 用处用户赞时间
+                connection.zRem(likeTimeKey.getBytes(), userIdStr.getBytes());
+                // 减少点赞计数
+                connection.decr(likeCountKey.getBytes());
+            }
+            return connection.exec();
+        });
+
+//        myThreadPool.execute(() -> transactionTemplate.execute(status -> { // 修改为有返回值的方法
+//            if(!isLiked) {
+//                UserLikes userLikes = new UserLikes();
+//                userLikes.setPictureId(request.getPictureId());
+//                userLikes.setUserId(userId);
+//                userLikesMapper.insert(userLikes);
+//            } else {
+//                UpdateWrapper<UserLikes> userLikesUpdateWrapper = new UpdateWrapper<>();
+//                userLikesUpdateWrapper.eq("picture_id", request.getPictureId()).eq("user_id", userId);
+//                userLikesMapper.delete(userLikesUpdateWrapper);
+//            }
+//
+//            log.info("开始执行更新操作");
+//            UpdateWrapper<Picture> picUpdateWrapper = new UpdateWrapper<>();
+//            String sql = !isLiked ? "likes_count = likes_count + 1" : "likes_count = likes_count - 1";
+//            picUpdateWrapper.setSql(sql).eq("id", request.getPictureId());
+//            pictureMapper.update(null, picUpdateWrapper);
+//            log.info("执行更新操作结束");
+//            return null; // 确保事务提交
+//        }));
     }
 
 

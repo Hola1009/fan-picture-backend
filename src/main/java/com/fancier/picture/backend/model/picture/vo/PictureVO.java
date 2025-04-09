@@ -105,4 +105,8 @@ public class PictureVO {
      * 创建用户信息
      */
     private UserVO user;
+
+    private Integer likesCount;
+
+    private boolean isLike = false;
 }

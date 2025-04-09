@@ -10,6 +10,7 @@ debug：当此属性设置为true时，将打印出logback内部日志信息，�
     <property name="APP_NAME" value="fan-picture-backend" />
     <!-- 定义日志文件的路径 -->
     <property name="LOG_PATH" value="E:/CODE/java_workspace/${APP_NAME}/logs" />
+    <!--<property name="LOG_PATH" value="/home/ubuntu/web/fan-picture/${APP_NAME}/logs" />-->
     <!-- 定义日志的文件名 -->
     <property name="LOG_FILE" value="${LOG_PATH}/fan-picture-backend.log" />
 

@@ -5,7 +5,6 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 /**
@@ -13,7 +12,7 @@ import java.time.LocalDateTime;
  * @TableName picture
  */
 @Data
-public class Picture implements Serializable {
+public class Picture {
 
     @TableId(type = IdType.ASSIGN_ID)
     private Long id;
@@ -63,5 +62,5 @@ public class Picture implements Serializable {
 
     private String picColor;
 
-    private static final long serialVersionUID = 1L;
+    private Integer likesCount;
 }

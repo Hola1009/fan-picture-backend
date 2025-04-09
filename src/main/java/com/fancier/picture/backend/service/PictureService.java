@@ -50,4 +50,6 @@ public interface PictureService extends IService<Picture> {
     List<PictureVO> searchByColor(SearchPictureByColorRequest request);
 
     CreateOutPaintingTaskResponse createPictureOutPaintingTask(CreatePictureOutPaintingTaskRequest request);
+
+    void pictureLike(PictureLikeRequest request);
 }
