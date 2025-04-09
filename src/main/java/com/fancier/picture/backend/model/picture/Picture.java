@@ -63,4 +63,6 @@ public class Picture {
     private String picColor;
 
     private Integer likesCount;
+
+    private Integer views;
 }

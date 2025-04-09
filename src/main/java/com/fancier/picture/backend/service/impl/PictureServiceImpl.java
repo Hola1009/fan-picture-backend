@@ -234,6 +234,12 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
         pictureVO.setUser(userVO);
 
+        UpdateWrapper<Picture> pictureUpdateWrapper = new UpdateWrapper<>();
+        pictureUpdateWrapper.setSql("views = views + 1")
+                .eq("id", id);
+
+        pictureMapper.update(pictureUpdateWrapper);
+
         return pictureVO;
     }
 

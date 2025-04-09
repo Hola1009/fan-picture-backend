@@ -155,6 +155,7 @@ public class PictureController {
     }
 
     @PostMapping("/like")
+    @SaCheckLogin(type = KitType.USER)
     public BaseResponse<?> pictureLike(@RequestBody @Validated PictureLikeRequest request) {
         pictureService.pictureLike(request);
         return ResultUtils.success(true);

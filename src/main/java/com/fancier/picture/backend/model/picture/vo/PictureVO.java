@@ -109,4 +109,6 @@ public class PictureVO {
     private Integer likesCount;
 
     private boolean isLike = false;
+
+    private Integer views;
 }
