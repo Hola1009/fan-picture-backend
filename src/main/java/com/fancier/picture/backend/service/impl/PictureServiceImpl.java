@@ -43,6 +43,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -53,6 +54,7 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -84,6 +86,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
     private final TransactionTemplate transactionTemplate;
 
     private final CosManager cosManager;
+
+    private final ThreadPoolTaskExecutor myThreadPool;
 
 
     private static final List<String> tagList;
@@ -286,7 +290,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
 
     public List<LikeInfoVO> batchCheckLikeStatus(Long userId, List<Long> pictureIds) {
-        // 1. 使用Pipeline同时查询两种数据
+        // 1. 使用Pipeline同时查询两种数据，减少网络延迟，提升查询性能
         List<Object> results = stringRedisTemplate.executePipelined((RedisCallback<Object>) connection -> {
             // 查询用户点赞状态
             for (Long picId : pictureIds) {
@@ -393,16 +397,19 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         }
 
         Integer count = 0;
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
         for (Element imgElement : imgElements) {
             String originalUrl = imgElement.attr("src");
             if (StrUtil.isBlank(originalUrl)) {
                 continue;
             }
-            String url = originalUrl;
+            String url;
 
             int i = originalUrl.indexOf("?");
             if (i > -1) {
                 url = originalUrl.substring(0, i);
+            } else {
+                url = originalUrl;
             }
 
             UploadPictureRequest uploadPictureRequest = new UploadPictureRequest();
@@ -410,12 +417,20 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
             uploadPictureRequest.setPicName(request.getNamePrefix() + "-" + count);
 
-            uploadPicture(url, uploadPictureRequest);
+            CompletableFuture<Void> future = CompletableFuture.runAsync(
+                    () -> uploadPicture(url, uploadPictureRequest),
+                    myThreadPool
+            );
+            futures.add(future);
 
-            if ((++count).equals(request.getCount())) {
-                break;
-            }
         }
+
+        // 等待所有异步任务完成
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(
+                futures.toArray(new CompletableFuture[0])
+        );
+
+        allOf.join();
 
         return count;
     }
@@ -501,6 +516,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         );
 
         // Redis 原子操作
+        // 管道（pipeline）可以将多个命令打包在一起发送给Redis服务器，
+        // 而不是逐条发送。这样可以减少网络往返的次数，从而提高性能。
         stringRedisTemplate.executePipelined((RedisCallback<Object>) connection -> {
             connection.multi(); // 开启事务
             if (!isLiked) {
