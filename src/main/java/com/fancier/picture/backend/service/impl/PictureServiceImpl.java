@@ -55,6 +55,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -99,6 +100,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
 
     private static final String PICTURE_LIKE_COUNT_PREFIX = "fan_picture:picture:picture_like_count:";
     private static final String PICTURE_LIKE_TIME_PREFIX = "fan_picture:picture:picture_like_time:";
+
+    private static final String OUT_PAINTING_TASK_PREFIX = "fan_picture:picture:out_painting_task:";
 
     static {
         tagList = FileParserUtil.parseJsonFile2ListFormResource(String.class, "biz/tagList.json");
@@ -496,7 +499,20 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture>
         Picture byId = this.getById(pictureId);
         ThrowUtils.throwIf(byId == null, ErrorCode.PARAM_ERROR, "需要修改的图片不存在");
 
-        return aliYunAiApi.createOutPaintingTask(byId.getUrl(), request.getParameters());
+        String s = stringRedisTemplate.opsForValue().get(OUT_PAINTING_TASK_PREFIX + byId);
+
+        if (StrUtil.isBlank(s)) {
+            CreateOutPaintingTaskResponse outPaintingTask = aliYunAiApi.createOutPaintingTask(byId.getUrl(), request.getParameters());
+            String jsonStr = JSONUtil.toJsonStr(outPaintingTask);
+
+            stringRedisTemplate.opsForValue().set(OUT_PAINTING_TASK_PREFIX + byId, jsonStr, 9, TimeUnit.SECONDS);
+
+            return outPaintingTask;
+        }
+
+        String jsonStr = stringRedisTemplate.opsForValue().get(OUT_PAINTING_TASK_PREFIX + byId);
+
+        return JSONUtil.toBean(jsonStr, CreateOutPaintingTaskResponse.class);
     }
 
     /**
